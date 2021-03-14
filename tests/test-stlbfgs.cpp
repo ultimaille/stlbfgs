@@ -3,7 +3,6 @@
 #include <iostream>
 #include "stlbfgs.h"
 
-using namespace STLBFGS;
 static const double ftol = 1e-5;
 
 TEST_CASE("foo", "[bar]") {
@@ -17,7 +16,7 @@ TEST_CASE("foo", "[bar]") {
     };
 
     LBFGSopt opt = { func };
-    opt.optimize(sol);
+    opt.go(sol);
 
     REQUIRE(std::abs(sol[0]-7)<ftol);
     REQUIRE(std::abs(sol[1]-1)<ftol);
