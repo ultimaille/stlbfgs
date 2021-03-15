@@ -1,12 +1,13 @@
 #include <iostream>
 #include <deque>
+#include <cmath>
 #include <cassert>
 #include "stlbfgs.h"
 
 typedef std::vector<double> vector;
-typedef std::deque<vector> history;
 
-inline double dot(const vector &a, const vector &b) {
+// compute dot product <a,b>
+double operator*(const vector &a, const vector &b) {
     assert(a.size()==b.size());
     double dot = 0;
 #pragma omp parallel for reduction(+:dot)
@@ -15,93 +16,105 @@ inline double dot(const vector &a, const vector &b) {
     return dot;
 }
 
-void two_loop(const history &S, const history &Y, const vector &g, vector &p) {
-    const int m = static_cast<int>(S.size());
-    const int n = static_cast<int>(g.size());
+double norm(const vector &v) {
+    return std::sqrt(v*v);
+}
+
+// Add a correction pair {s, y} to the optimization history
+void BFGSmat::add_correction(const vector &s, const vector &y) {
+    assert(nvars == s.size());
+    assert(nvars == y.size());
+    S.push_front(s);
+    Y.push_front(y);
+    if (S.size()>history_depth) S.pop_back();
+    if (Y.size()>history_depth) Y.pop_back();
+
+    double yy = y*y;
+    assert(std::abs(yy) > 1e-14);
+    gamma = (s*y)/yy;
+}
+
+// Multiply a vector g by the inverse Hessian matrix approximation
+// Algorithm 7.4 (L-BFGS two-loop recursion)
+// Nocedal, J., & Wright, S. (2006). Numerical optimization.
+void BFGSmat::mult(const vector &g, vector &result) {
+    const size_t m = S.size();
     assert(Y.size() == m);
+    assert(g.size() == nvars);
 
-    p = g;//vector(n);
-    /*
-#pragma omp parallel for
-    for (int j=0; j<n; j++)
-        p[j] = g[j];
-    */
+    result = g;
 
-    for (int i=0; i<m; i++) {
+    std::vector<double> a(m);
+    for (size_t i=0; i<m; i++) {
         const vector &y = Y[i];
         const vector &s = S[i];
-        assert(n==s.size() && n==y.size());
-        double sp = dot(s, p);
-        double sy = dot(s, y);
-        assert(std::abs(sy)>1e-14);
-
+        double sy = s*y;
+        assert(std::abs(sy) > 1e-14);
+        a[i] = (s*result)/sy;
 #pragma omp parallel for
-        for (int j=0; j<n; j++)
-            p[j] -= (sp*y[j])/sy;
+        for (size_t j=0; j<nvars; j++)
+            result[j] -= a[i]*y[j];
     }
 
     if (m>0) {
-        double yy = dot(Y[0], Y[0]);
-        assert(std::abs(yy)>1e-14);
-        double c = dot(S[0], Y[0])/yy;
 #pragma omp parallel for
-        for (int j=0; j<n; j++)
-            p[j] *= c;
+        for (size_t j=0; j<nvars; j++)
+            result[j] *= gamma;
     }
-//    for (double v : y) std::cerr << v << std::endl;
 
-
-    for (int i=m; i--; ) {
+    for (size_t i=m; i--;) {
         const vector &y = Y[i];
         const vector &s = S[i];
-        assert(n==s.size() && n==y.size());
-        double sy = dot(s, y);
-        double a = dot(s, p)/sy;
-        double b = dot(y, p)/sy;
+        double b = (y*result)/(s*y);
 #pragma omp parallel for
-        for (int j=0; j<n; j++)
-            p[j] += (a-b)*s[j];
+        for (size_t j=0; j<nvars; j++)
+            result[j] += (a[i]-b)*s[j];
     }
 }
 
-void LBFGSopt::go(vector& x) {
-    const int n = static_cast<int>(x.size());
+void LBFGSopt::go(vector &x) {
+    const size_t n = x.size();
+    assert(invH.nvars == n);
 
-    vector g(n), p(n), xprev(n), gprev(n);
     double f;
+    vector g(n), p(n);
 
-    history S, Y;
-    for (int i=0; i<max_iter_; i++) {
-        func_grad_(x, f, g);
-        two_loop(S, Y, g, p);
-        gprev = g;
-        xprev = x;
-
-//    for (double v : g)
-//        std::cerr << v << std::endl;
-
-    for (double v : p) std::cerr << v << std::endl;
-
-        for (int j=0; j<n; j++) {
-            x[j] += .1 * p[j];
+    func_grad(x, f, g);
+    for (size_t i=0; i<maxiter; i++) {
+        {
+            std::cerr << "x: ";
+            for (double v : x) std::cerr << v << " ";
+            std::cerr << std::endl;
+            std::cerr << "g: ";
+            for (double v : g) std::cerr << v << " ";
+            std::cerr << std::endl;
+            std::cerr << "f: " << f << std::endl;
         }
 
-        func_grad_(x, f, g);
+        invH.mult(g, p);
 
-        S.emplace_front(n);
-        Y.emplace_front(n);
-        vector &s = S.front();
-        vector &y = Y.front();
+        double fprev = f;
+        vector xprev = x;
+        vector gprev = g;
+        vector s(n), y(n);
+
+        for (size_t j=0; j<n; j++)
+            x[j] -= p[j]/3.;
+        func_grad(x, f, g);
+
 #pragma omp parallel for
-        for (int j=0; j<n; j++) {
+        for (size_t j=0; j<n; j++) {
             s[j] = x[j]-xprev[j];
             y[j] = g[j]-gprev[j];
         }
-        if (S.size()>history_depth_) S.pop_back();
-        if (Y.size()>history_depth_) Y.pop_back();
+        invH.add_correction(s, y);
 
-        std::cerr << "f: " << f << std::endl;
-        if (i==1) break;
+        if ((fprev-f)/std::max(std::max(std::abs(fprev), std::abs(f)), 1.)<=ftol) break;
+        double gmax = 0.;
+#pragma omp parallel for reduction(max:gmax)
+        for (double gi : g)
+            gmax = std::max(gmax, std::abs(gi));
+        if (gmax <= gtol) break;
     }
 }
 

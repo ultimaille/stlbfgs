@@ -3,7 +3,7 @@
 #include <iostream>
 #include "stlbfgs.h"
 
-static const double ftol = 1e-5;
+static const double xtol = 1e-3;
 
 TEST_CASE("foo", "[bar]") {
     std::vector<double> sol = {10, 10};
@@ -15,10 +15,10 @@ TEST_CASE("foo", "[bar]") {
         g[1] = 2*(x[1] - 1);
     };
 
-    LBFGSopt opt = { func };
+    LBFGSopt opt(2, func);
     opt.go(sol);
 
-    REQUIRE(std::abs(sol[0]-7)<ftol);
-    REQUIRE(std::abs(sol[1]-1)<ftol);
+    REQUIRE(std::abs(sol[0]-7)<xtol);
+    REQUIRE(std::abs(sol[1]-1)<xtol);
 }
 
