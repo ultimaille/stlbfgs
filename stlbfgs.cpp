@@ -21,7 +21,7 @@ double norm(const vector &v) {
 }
 
 // Add a correction pair {s, y} to the optimization history
-void BFGSmat::add_correction(const vector &s, const vector &y) {
+void LBFGSopt::IHessian::add_correction(const vector &s, const vector &y) {
     assert(nvars == s.size());
     assert(nvars == y.size());
     S.push_front(s);
@@ -36,8 +36,8 @@ void BFGSmat::add_correction(const vector &s, const vector &y) {
 
 // Multiply a vector g by the inverse Hessian matrix approximation
 // Algorithm 7.4 (L-BFGS two-loop recursion)
-// Nocedal, J., & Wright, S. (2006). Numerical optimization.
-void BFGSmat::mult(const vector &g, vector &result) {
+// Nocedal and Wright, Numerical optimization (2006)
+void LBFGSopt::IHessian::mult(const vector &g, vector &result) {
     const size_t m = S.size();
     assert(Y.size() == m);
     assert(g.size() == nvars);
@@ -72,6 +72,9 @@ void BFGSmat::mult(const vector &g, vector &result) {
     }
 }
 
+// Run an L-BFGS optimization
+// Algorithm 7.5
+// Nocedal and Wright, Numerical optimization (2006)
 void LBFGSopt::go(vector &x) {
     const size_t n = x.size();
     assert(invH.nvars == n);
