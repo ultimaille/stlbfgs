@@ -5,6 +5,39 @@
 #include <limits>
 #include <cassert>
 
+typedef std::function<void(const double alpha, double &f, double &g)> func_deriv_eval;
+
+// f0 Value of function at starting point of line search.
+// d0 Directional derivative at starting point of line search.
+// alpha the step length.
+// fa Value of function at alpha.
+// mu the sufficient decrease constant. Should take a value between 0 and 1.
+bool sufficient_decrease(double f0, double d0, double alpha, double fa, double mu) {
+    return fa <= f0 + mu*alpha*d0;
+}
+
+void line_search(const func_deriv_eval phi, const double alpha0, const double mu, const double eta) {
+    constexpr double xtrapf = 4.;
+    double f, g;
+    phi(alpha0, f, g);
+    std::cerr << f << " " << g << std::endl;
+    double  = 0., sty = 0.;
+    bool brackt = false;  // set to true when a minimizer has been bracketed in an interval of uncertainty  with endpoints stx and sty
+    bool stage1 = true;   // use function psi instead if phi
+    // TODO alpha_min alpha_max nfev
+    while (1) {
+        double stmin = 0., stmax = 0.;
+        if (brackt) {
+            stmin = std::min(stx, sty);
+            stmax = std::max(stx, sty);
+        } else {
+        }
+    }
+}
+
+
+
+
 /*
 typedef std::vector<double> vector;
 typedef std::function<void(std::vector<double>& x, double &f, std::vector<double>& g)> func_grad_eval;
