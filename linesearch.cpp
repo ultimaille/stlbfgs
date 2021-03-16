@@ -6,6 +6,7 @@
 #include <cassert>
 
 typedef std::function<void(const double alpha, double &f, double &g)> func_deriv_eval;
+template <typename T> auto square(const T &number) { return number * number; }
 
 // f0 Value of function at starting point of line search.
 // d0 Directional derivative at starting point of line search.
@@ -16,11 +17,33 @@ bool sufficient_decrease(double f0, double d0, double alpha, double fa, double m
     return fa <= f0 + mu*alpha*d0;
 }
 
+// minimizer of the cubic function that interpolates f(a), f'(a), f(b), f'(b) within the given interval ]a, b[
+double find_cubic_minimizer(double a, double fa, double ga, double b, double fb, double gb) {
+//  if (std::abs(a - b) < precision) return a;
+    const double z = 3.*(fa - fb)/(b - a) + ga + gb;
+    const double w = std::sqrt(z*z - ga*gb);
+    return b - ((b - a)*(gb + w - z))/(gb - ga + 2.*w);
+}
+
+// minimizer of the quadratic function that interpolates f(a), f'(a), f(b) within the given interval ]a, b[
+double find_quadratic_minimizer(double a, double fa, double ga, double b, double fb) {
+//  if (std::abs(a - b) < precision) return a;
+    return a + (square(b - a)*ga)/(2.*(fa - fb + (b - a)*ga));
+}
+
+// minimizer of the quadratic function that interpolates f'(a), f'(b) within the given interval ]a, b[
+// N.B. the function itself is undetermined since we miss information like f(a) or f(b); however the minimizer is well-defined
+double find_quadratic_minimizer(double a, double ga, double b, double gb) {
+//  if (std::abs(a - b) < precision) return a;
+    return b + ((b - a)*gb)/(ga - gb);
+}
+
 void line_search(const func_deriv_eval phi, const double alpha0, const double mu, const double eta) {
     constexpr double xtrapf = 4.;
     double f, g;
     phi(alpha0, f, g);
     std::cerr << f << " " << g << std::endl;
+    /*
     double  = 0., sty = 0.;
     bool brackt = false;  // set to true when a minimizer has been bracketed in an interval of uncertainty  with endpoints stx and sty
     bool stage1 = true;   // use function psi instead if phi
@@ -33,6 +56,7 @@ void line_search(const func_deriv_eval phi, const double alpha0, const double mu
         } else {
         }
     }
+    */
 }
 
 
