@@ -3,6 +3,7 @@
 //#include <vector>
 #include <cmath>
 #include <limits>
+#undef NDEBUG
 #include <cassert>
 
 typedef std::function<void(const double alpha, double &f, double &g)> func_deriv_eval;
@@ -38,25 +39,42 @@ double find_quadratic_minimizer(double a, double ga, double b, double gb) {
     return b + ((b - a)*gb)/(ga - gb);
 }
 
-void line_search(const func_deriv_eval phi, const double alpha0, const double mu, const double eta) {
-    constexpr double xtrapf = 4.;
-    double f, g;
-    phi(alpha0, f, g);
-    std::cerr << f << " " << g << std::endl;
-    /*
-    double  = 0., sty = 0.;
-    bool brackt = false;  // set to true when a minimizer has been bracketed in an interval of uncertainty  with endpoints stx and sty
-    bool stage1 = true;   // use function psi instead if phi
+double trial_value(double al, double fl, double gl, double at, double ft, double gt, double au, double fu, double gu) {
+    assert(al<au); assert(al<at); assert(at<au); // TODO do we have this???
+    double ac = find_cubic_minimizer(al, fl, gl, at, ft, gt);
+    double aq = find_quadratic_minimizer(al, fl, gl, at, ft);
+    if (ft > fl) // Case 1: a higher function value. The minimum is bracketed.
+        return (std::abs(ac - al) < std::abs(aq - al)) ? ac : (aq + ac)/2.;
+
+    double as = find_quadratic_minimizer(al, gl, at, gt);
+    if (gt*gl < 0) // Case 2: A lower function value and derivatives of opposite sign. The minimum is bracketed.
+        return (std::abs(ac - at) >= std::abs(as - at)) ? ac : as;
+
+    constexpr double delta = .66; // the magic constaint is used in the Moré-Thuente paper without explanation (Section 4, Case 3).
+    if (std::abs(gt) < std::abs(gl)) { // Case 3: A lower function value, derivatives of the same sign, and the magnitude of the derivative decreases.
+        const double res = (std::abs(ac - at) < std::abs(as - at)) ? ac : as;
+        return at > al ?
+            std::min(at + delta*(au - at), res) :
+            std::max(at + delta*(au - at), res);
+    }
+
+    // Case 4: A lower function value, derivatives of the same sign, and the magnitude of the derivative does not decrease.
+    double ae = find_cubic_minimizer(at, ft, gt, au, fu, gu);
+    return ae;
+}
+
+void line_search(const func_deriv_eval phi, const double a0, const double mu, const double eta) {
+    double f0, g0;
+    phi(a0, f0, g0);
+
+    double a_l = 0.;
+    double a_u = 0.;
+    bool brackt = false; // set to true when a minimizer has been bracketed in an interval of uncertainty  with endpoints stx and sty
+    bool stage1 = true;  // use function psi instead if phi
+
     // TODO alpha_min alpha_max nfev
     while (1) {
-        double stmin = 0., stmax = 0.;
-        if (brackt) {
-            stmin = std::min(stx, sty);
-            stmax = std::max(stx, sty);
-        } else {
-        }
     }
-    */
 }
 
 
