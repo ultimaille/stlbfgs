@@ -48,7 +48,6 @@ typedef std::function<void(const double alpha, double &f, double &g)> func_deriv
 void line_search(const func_deriv_eval phi, const double alpha0, const double mu, const double eta);
 
 
-/*
 TEST_CASE("foo", "[bar]") {
     // Table 1
     const func_deriv_eval func = [](const double alpha, double& f, double& g) {
@@ -59,5 +58,5 @@ TEST_CASE("foo", "[bar]") {
     line_search(func, 1e-3, 1e-3, 1e-1);
     REQUIRE( true );
 }
-*/
+
 

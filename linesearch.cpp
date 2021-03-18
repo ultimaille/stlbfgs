@@ -9,13 +9,22 @@
 typedef std::function<void(const double alpha, double &f, double &g)> func_deriv_eval;
 template <typename T> auto square(const T &number) { return number * number; }
 
+struct Sample {
+    double a, f, d;
+};
+
+
 // f0 Value of function at starting point of line search.
 // d0 Directional derivative at starting point of line search.
 // alpha the step length.
 // fa Value of function at alpha.
 // mu the sufficient decrease constant. Should take a value between 0 and 1.
-bool sufficient_decrease(double f0, double d0, double alpha, double fa, double mu) {
-    return fa <= f0 + mu*alpha*d0;
+bool sufficient_decrease(Sample phi0, Sample phia, double mu) {
+    return phia.f <= phi0.f + mu*phia.a*phi0.d;
+}
+
+bool curvature_condition(Sample phi0, Sample phia, double eta) {
+    return std::abs(phia.d) <= eta*std::abs(phi0.d);
 }
 
 // minimizer of the cubic function that interpolates f(a), f'(a), f(b), f'(b) within the given interval ]a, b[
@@ -39,42 +48,99 @@ double find_quadratic_minimizer(double a, double ga, double b, double gb) {
     return b + ((b - a)*gb)/(ga - gb);
 }
 
-double trial_value(double al, double fl, double gl, double at, double ft, double gt, double au, double fu, double gu) {
-    assert(al<au); assert(al<at); assert(at<au); // TODO do we have this???
-    double ac = find_cubic_minimizer(al, fl, gl, at, ft, gt);
-    double aq = find_quadratic_minimizer(al, fl, gl, at, ft);
-    if (ft > fl) // Case 1: a higher function value. The minimum is bracketed.
-        return (std::abs(ac - al) < std::abs(aq - al)) ? ac : (aq + ac)/2.;
+double trial_value(const Sample &l, const Sample &t, const Sample &u) {
+    assert(l.a<u.a); assert(l.a<t.a);// assert(t.a<u.a); // TODO do we have this???
+    double ac = find_cubic_minimizer(l.a, l.f, l.d, t.a, t.f, t.d);
+    double aq = find_quadratic_minimizer(l.a, l.a, l.d, t.a, t.f);
+    if (t.f > l.f) // Case 1: a higher function value. The minimum is bracketed.
+        return (std::abs(ac - l.a) < std::abs(aq - l.a)) ? ac : (aq + ac)/2.;
 
-    double as = find_quadratic_minimizer(al, gl, at, gt);
-    if (gt*gl < 0) // Case 2: A lower function value and derivatives of opposite sign. The minimum is bracketed.
-        return (std::abs(ac - at) >= std::abs(as - at)) ? ac : as;
+    double as = find_quadratic_minimizer(l.a, l.d, t.a, t.d);
+    if (t.d*l.d < 0) // Case 2: A lower function value and derivatives of opposite sign. The minimum is bracketed.
+        return (std::abs(ac - t.a) >= std::abs(as - t.a)) ? ac : as;
 
     constexpr double delta = .66; // the magic constaint is used in the Moré-Thuente paper without explanation (Section 4, Case 3).
-    if (std::abs(gt) < std::abs(gl)) { // Case 3: A lower function value, derivatives of the same sign, and the magnitude of the derivative decreases.
-        const double res = (std::abs(ac - at) < std::abs(as - at)) ? ac : as;
-        return at > al ?
-            std::min(at + delta*(au - at), res) :
-            std::max(at + delta*(au - at), res);
+    if (std::abs(t.d) < std::abs(l.d)) { // Case 3: A lower function value, derivatives of the same sign, and the magnitude of the derivative decreases.
+        const double res = (std::abs(ac - t.a) < std::abs(as - t.a)) ? ac : as;
+        return t.a > l.a ?
+            std::min(t.a + delta*(u.a - t.a), res) :
+            std::max(t.a + delta*(u.a - t.a), res);
     }
 
     // Case 4: A lower function value, derivatives of the same sign, and the magnitude of the derivative does not decrease.
-    double ae = find_cubic_minimizer(at, ft, gt, au, fu, gu);
+    double ae = find_cubic_minimizer(t.a, t.f, t.d, u.a, u.f, u.d);
     return ae;
 }
 
-void line_search(const func_deriv_eval phi, const double a0, const double mu, const double eta) {
-    double f0, g0;
-    phi(a0, f0, g0);
+void line_search(const func_deriv_eval func, double at, double mu, double eta) {
+    auto phi = [&](const double a) {
+        double f, d;
+        func(a, f, d);
+        return Sample{a, f, d};
 
-    double a_l = 0.;
-    double a_u = 0.;
-    bool brackt = false; // set to true when a minimizer has been bracketed in an interval of uncertainty  with endpoints stx and sty
+    };
+    Sample phi0 = phi(0);
+
+    auto psi = [&](const Sample &phia) {
+        return Sample{ phia.a, phia.f-phi0.f-mu*phi0.d*phia.a,  phia.d-mu*phi0.d };
+    };
+
     bool stage1 = true;  // use function psi instead if phi
 
+    Sample phil = phi0;
+    Sample phit = phi(at);
+    Sample phiu = phi(phit.a + 4.*(phit.a - phil.a));
+
     // TODO alpha_min alpha_max nfev
-    while (1) {
+for (int i=0; i<10; i++) {
+        if (phil.a > phiu.a)
+            std::swap(phil, phiu);
+
+        std::cerr << phil.a << " " << phit.a << " " << phiu.a << std::endl;
+
+//      assert(phil.a<phiu.a); assert(phil.a<phit.a); assert(phit.a<phiu.a); // TODO do we have this???
+
+        if (sufficient_decrease(phi0, phit, mu) && curvature_condition(phi0, phit, eta)) {
+            std::cerr << "Yahoo!" << std::endl;
+            return;
+        }
+
+        // Pick next step size by interpolating either phi or psi depending on which update algorithm is currently being used.
+        Sample psit = psi(phit);
+        double at = stage1 ? trial_value(phil, phit, phiu) : trial_value(psi(phil), psit, psi(phiu));
+        phit = phi(at);
+        psit = psi(phit);
+
+        // Decide if we want to switch to using a "Modified Updating Algorithm" (shown after theorem 3.2 in the paper)
+        // by switching from using function psi to using function phi.
+        // The decision follows the logic in the paragraph right before theorem 3.3 in the paper.
+        if (stage1 && psit.f<=0 && phit.d>0) {
+            stage1 = false;
+        }
+
+        if (stage1) {
+            Sample psil = psi(phil), psiu = psi(phiu);
+            if (psit.f > psil.f) {
+                phiu = phit;
+            } else if (psit.d*(psit.a - psil.a) > 0) {
+                phil = phit;
+            } else {
+                phiu = phil;
+                phil = phit;
+            }
+        } else {
+            // Update the interval that will be used to generate the next step using the "Modified Updating Algorithm" (right after theorem 3.2 in the paper).
+            if (phit.f > phil.f) {
+                phiu = phit;
+            } else if (phit.d*(phit.a - phil.a) > 0) {
+                phil = phit;
+            } else {
+                phiu = phil;
+                phil = phit;
+            }
+        }
     }
+
 }
 
 
