@@ -2,11 +2,15 @@
 #include <catch2/catch.hpp>
 #include <iostream>
 
-#include "stlbfgs.h"
+#include "linesearch.h"
 
-double find_cubic_minimizer(double a, double fa, double ga, double b, double fb, double gb);
-double find_quadratic_minimizer(double a, double fa, double ga, double b, double fb);
-double find_quadratic_minimizer(double a, double ga, double b, double gb);
+using namespace STLBFGS;
+
+namespace STLBFGS {
+    double find_cubic_minimizer(double a, double fa, double ga, double b, double fb, double gb);
+    double find_quadratic_minimizer(double a, double fa, double ga, double b, double fb);
+    double find_quadratic_minimizer(double a, double ga, double b, double gb);
+}
 
 TEST_CASE("cubic 1", "[interpolation]") {
     auto f = [](const double a) { return a*a*a - a; };
@@ -44,16 +48,14 @@ TEST_CASE("quadratic", "[interpolation]") {
 }
 
 template <typename T> auto square(const T &number) { return number * number; }
-typedef std::function<void(const double alpha, double &f, double &g)> func_deriv_eval;
-void line_search(const func_deriv_eval phi, const double alpha0, const double mu, const double eta);
-
 
 TEST_CASE("foo", "[bar]") {
     // Table 1
-    const func_deriv_eval func = [](const double alpha, double& f, double& g) {
+    const linesearch_function func = [](const double alpha) -> Sample {
         constexpr double beta = 2.;
-        f = -alpha/(alpha*alpha + beta);
-        g = (square(alpha)-beta)/square(beta+square(alpha));
+        double f = -alpha/(alpha*alpha + beta);
+        double g = (square(alpha)-beta)/square(beta+square(alpha));
+        return { alpha, f, g };
     };
     line_search(func, 1e-3, 1e-3, 1e-1);
     REQUIRE( true );
