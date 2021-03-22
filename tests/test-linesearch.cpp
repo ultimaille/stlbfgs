@@ -49,23 +49,71 @@ TEST_CASE("quadratic", "[interpolation]") {
 
 template <typename T> auto square(const T &number) { return number * number; }
 
-TEST_CASE("foo", "[bar]") {
-    // Table 1
+TEST_CASE("Table 1", "[Mor\\'e-Thuente]") {
+    std::cerr << "\n\nTable 1\n\n";
     const linesearch_function func = [](const double alpha) -> Sample {
         constexpr double beta = 2.;
         double f = -alpha/(alpha*alpha + beta);
         double g = (square(alpha)-beta)/square(beta+square(alpha));
         return { alpha, f, g };
     };
-    line_search(func, func(0), 1e-3, 1e-3, 1e-1);
-    std::cerr << std::endl << std::endl;
-    line_search(func, func(0), 1e-1, 1e-3, 1e-1);
-    std::cerr << std::endl << std::endl;
-    line_search(func, func(0), 1e+1, 1e-3, 1e-1);
-    std::cerr << std::endl << std::endl;
-    line_search(func, func(0), 1e+3, 1e-3, 1e-1);
-    std::cerr << std::endl << std::endl;
-    REQUIRE( true );
+    double alpha = 1e-3;
+    REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-1) );
+    alpha = 1e-1;
+    REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-1) );
+    alpha = 1e+1;
+    REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-1) );
+    alpha = 1e+3;
+    REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-1) );
+}
+
+TEST_CASE("Table 2", "[Mor\\'e-Thuente]") {
+    std::cerr << "\n\nTable 2\n\n";
+    const linesearch_function func = [](const double alpha) -> Sample {
+        constexpr double beta = .004;
+        double f = pow(alpha+beta, 5.) - 2.*pow(alpha+beta, 4.);
+        double g = 5.*pow(alpha+beta, 4.) - 8.*pow(alpha+beta, 3.);
+        return { alpha, f, g };
+    };
+    double alpha = 1e-3;
+    REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    alpha = 1e-1;
+    REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    alpha = 1e+1;
+    REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    alpha = 1e+3;
+    REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+}
+
+TEST_CASE("Table 3", "[Mor\\'e-Thuente]") {
+    std::cerr << "\n\nTable 3\n\n";
+    const linesearch_function func = [](const double alpha) -> Sample {
+        constexpr double beta = .01;
+        constexpr double l = 39;
+
+        double f = 2.*(1.-beta)/(l*M_PI)*sin(l*M_PI_2*alpha);
+        double g = (1.-beta)*cos(l*M_PI_2*alpha);
+        if (alpha<=1.-beta) {
+            f += 1.-alpha;
+            g += -1.;
+        } else if (alpha>=1+beta) {
+            f += alpha-1.;
+            g += 1.;
+        } else {
+            f += square(alpha-1.)/(2.*beta) + beta/2.;
+            g += (alpha-1.)/beta;
+        }
+
+        return { alpha, f, g };
+    };
+    double alpha = 1e-3;
+    REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    alpha = 1e-1;
+    REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    alpha = 1e+1;
+    REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    alpha = 1e+3;
+    REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
 }
 
 

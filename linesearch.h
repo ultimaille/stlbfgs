@@ -8,7 +8,7 @@ namespace STLBFGS {
         double a, f, d;
     };
     typedef std::function<Sample (const double alpha)> linesearch_function;
-    void line_search(const linesearch_function phi, const Sample phi0, const double at, const double mu, const double eta);
+    bool line_search(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta);
 }
 
 #endif //__LINESEARCH_H__

@@ -45,53 +45,49 @@ namespace STLBFGS {
         return b + ((b - a)*gb)/(ga - gb);
     }
 
-    std::tuple<double,bool> trial_value(const Sample &l, const Sample &t, const Sample &u) {
-        assert(t.a<u.a);
-        assert(l.a<u.a); assert(l.a<t.a);  assert(l.d<0); // TODO do we have this???
+    std::tuple<double,int> trial_value(const Sample &l, const Sample &t, const Sample &u) {
+        assert(l.a<t.a); assert(t.a<u.a); assert(l.d<0);
         double ac = find_cubic_minimizer(l.a, l.f, l.d, t.a, t.f, t.d);
         if (t.f > l.f) { // Case 1: a higher function value. The minimum is bracketed.
             double aq = find_quadratic_minimizer(l.a, l.f, l.d, t.a, t.f);
             double res = (std::abs(ac - l.a) < std::abs(aq - l.a)) ? ac : (aq + ac)/2.;
             assert(l.a<res); assert(res<t.a);
-            std::cerr << "case1: " << res << std::endl;
-            return std::make_tuple(res, true);
+            return std::make_tuple(res, 1);
         }
 
         double as = find_quadratic_minimizer(l.a, l.d, t.a, t.d);
         if (t.d > 0) { // Case 2: A lower function value and derivatives of opposite sign. The minimum is bracketed.
             double res = (std::abs(ac - t.a) >= std::abs(as - t.a)) ? ac : as;
             assert(l.a<res); assert(res<t.a);
-            std::cerr << "case2: " << res << std::endl;
-            return std::make_tuple(res, true);
+            return std::make_tuple(res, 2);
         }
 
         constexpr double delta = .66; // the magic constant is used in the Moré-Thuente paper (Section 4, Case 3).
         if (std::abs(t.d) < std::abs(l.d)) { // Case 3: A lower function value, derivatives of the same sign, and the magnitude of the derivative decreases.
-            double res = (std::abs(ac - t.a) < std::abs(as - t.a)) ? ac : as;
-            std::cerr << "ac: " << ac << " as: " << as << " res: " << res << std::endl;
+            bool inf_right = ((l.d + t.d)*(t.a - l.a) > 2.*(t.f - l.f)); // the cubic tends to infinity in the direction of the step
+            double res = (inf_right && (std::abs(ac - t.a) < std::abs(as - t.a))) ? ac : as;
+            std::cerr << inf_right << " " << ac << " " << as << " " << res << std::endl;
+    //        std::cerr << (t.a ==res) << std::endl;
+            assert(t.a<=res);
             res = std::min(t.a + delta*(u.a - t.a), res);
-            std::cerr << "case3: " << res << std::endl;
-            return std::make_tuple(res, false);
+            assert(t.a<=res); assert(res<u.a);
+            return std::make_tuple(res, 3);
         }
 
-        assert(t.a<u.a);
+// TODO bracketed
         // Case 4: A lower function value, derivatives of the same sign, and the magnitude of the derivative does not decrease.
         double ae = find_cubic_minimizer(t.a, t.f, t.d, u.a, u.f, u.d);
         double res = ae;
-        std::cerr << "case4: " << res << std::endl;
-        return std::make_tuple(res, false);
+        std::cerr << t.a << " " << res << std::endl;
+        if (t.a>res) {
+            res = t.a + delta*(u.a - t.a);
+        }
+        res = std::min(t.a + delta*(u.a - t.a), res);
+        assert(t.a<res); assert(res<u.a);
+        return std::make_tuple(res, 4);
     }
 
-    void line_search(const linesearch_function phi, const Sample phi0, const double at, const double mu, const double eta) {
-        /*
-           auto phi = [&](const double a) {
-           double f, d;
-           func(a, f, d);
-           return Sample{a, f, d};
-           };
-         */
-//      Sample phi0 = phi(0);
-
+    bool line_search(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta) {
         auto psi = [&](const Sample &phia) {
             return Sample{ phia.a, phia.f-phi0.f-mu*phi0.d*phia.a,  phia.d-mu*phi0.d };
         };
@@ -107,51 +103,51 @@ namespace STLBFGS {
         for (int i=0; i<30; i++) {
             if (!bracketed) // TODO
                 phiu = phi(phit.a + 4.*(phit.a - phil.a));
+            assert(phil.a<phit.a); assert(phit.a<phiu.a);
 
             std::cerr << phil.a << " " << phit.a << " " << phiu.a << std::endl;
 
-            //      assert(phil.a<phiu.a); assert(phil.a<phit.a); assert(phit.a<phiu.a); // TODO do we have this???
 
             if (sufficient_decrease(phi0, phit, mu) && curvature_condition(phi0, phit, eta)) {
-                std::cerr << "Yahoo!" << std::endl;
-                return;
+                std::cerr << "Yahoo!" << std::endl << std::endl;
+                return true;
             }
 
             // Pick next step size by interpolating either phi or psi depending on which update algorithm is currently being used.
             Sample psit = psi(phit);
-            auto [at,br] = stage1 ?
-                trial_value(    phil,  phit,     phiu) :
-                trial_value(psi(phil), psit, psi(phiu));
-            phit = phi(at);
-            bracketed = bracketed || br;
 
             // Decide if we want to switch to using a "Modified Updating Algorithm" (shown after theorem 3.2 in the paper)
             // by switching from using function psi to using function phi.
             // The decision follows the logic in the paragraph right before theorem 3.3 in the paper.
             if (stage1 && psit.f<=0 && phit.d>0) {
                 stage1 = false;
+                std::cerr << "Stage 2\n";
             }
 
-            Sample psil = psi(phil);
-            if (
-                    ( stage1 && psit.f > psil.f) ||
-                    (!stage1 && phit.f > phil.f)
-               ) {
+            int caseno;
+
+            std::tie(at,caseno) = stage1 ?
+                trial_value(    phil,  phit,     phiu) :
+                trial_value(psi(phil), psit, psi(phiu));
+            bracketed = bracketed || (caseno==1 || caseno==2);
+            std::cerr << "Bracketed: " << bracketed << std::endl;
+            assert(phil.a < at); assert(at<phiu.a);
+            std::cerr << "Case: " << caseno << std::endl;
+
+            double width = phiu.a - phil.a;
+            if (1==caseno || 2==caseno) {
                 phiu = phit;
-                std::cerr << 1 << std::endl;
-            } else if (
-                    ( stage1 && psit.d < 0) ||
-                    (!stage1 && phit.d < 0)
-                    ) {
-                phil = phit;
-                phit = phiu;
-                std::cerr << 2 << std::endl;
             } else {
-                phiu = phit;
-                std::cerr << 3 << std::endl;
+                phil = phit;
             }
 
+            // Force a sufficient decrease in the size of the interval of uncertainty.
+//          if (bracketed && phiu.a-phil.a >= .66*width) {
+//              at = (phil.a+phiu.a)/2.;
+//              std::cerr << "Forcing\n";
+//          }
 
+            phit = phi(at);
         }
     }
 
