@@ -57,7 +57,14 @@ TEST_CASE("foo", "[bar]") {
         double g = (square(alpha)-beta)/square(beta+square(alpha));
         return { alpha, f, g };
     };
-    line_search(func, 1e-3, 1e-3, 1e-1);
+    line_search(func, func(0), 1e-3, 1e-3, 1e-1);
+    std::cerr << std::endl << std::endl;
+    line_search(func, func(0), 1e-1, 1e-3, 1e-1);
+    std::cerr << std::endl << std::endl;
+    line_search(func, func(0), 1e+1, 1e-3, 1e-1);
+    std::cerr << std::endl << std::endl;
+    line_search(func, func(0), 1e+3, 1e-3, 1e-1);
+    std::cerr << std::endl << std::endl;
     REQUIRE( true );
 }
 

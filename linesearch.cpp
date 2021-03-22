@@ -1,3 +1,4 @@
+#include <tuple>
 #include <iostream>
 #include <cmath>
 #include <limits>
@@ -26,7 +27,7 @@ namespace STLBFGS {
         assert(a<b); assert(ga<0);
         double z = 3.*(fa - fb)/(b - a) + ga + gb;
         double D = z*z - ga*gb;
-        if (D<0) return std::numeric_limits<double>::max(); // no minumum
+        if (D<=0) return std::numeric_limits<double>::max(); // no minumum
         double w = std::sqrt(D);
         return b - ((b - a)*(gb + w - z))/(gb - ga + 2.*w);
     }
@@ -44,35 +45,44 @@ namespace STLBFGS {
         return b + ((b - a)*gb)/(ga - gb);
     }
 
-    double trial_value(const Sample &l, const Sample &t, const Sample &u) {
-        assert(l.a<u.a); assert(l.a<t.a); assert(t.a<u.a); assert(l.d<0); // TODO do we have this???
+    std::tuple<double,bool> trial_value(const Sample &l, const Sample &t, const Sample &u) {
+        assert(t.a<u.a);
+        assert(l.a<u.a); assert(l.a<t.a);  assert(l.d<0); // TODO do we have this???
         double ac = find_cubic_minimizer(l.a, l.f, l.d, t.a, t.f, t.d);
-        double aq = find_quadratic_minimizer(l.a, l.a, l.d, t.a, t.f);
         if (t.f > l.f) { // Case 1: a higher function value. The minimum is bracketed.
+            double aq = find_quadratic_minimizer(l.a, l.f, l.d, t.a, t.f);
             double res = (std::abs(ac - l.a) < std::abs(aq - l.a)) ? ac : (aq + ac)/2.;
             assert(l.a<res); assert(res<t.a);
-            return res;
+            std::cerr << "case1: " << res << std::endl;
+            return std::make_tuple(res, true);
         }
 
         double as = find_quadratic_minimizer(l.a, l.d, t.a, t.d);
         if (t.d > 0) { // Case 2: A lower function value and derivatives of opposite sign. The minimum is bracketed.
             double res = (std::abs(ac - t.a) >= std::abs(as - t.a)) ? ac : as;
             assert(l.a<res); assert(res<t.a);
-            return res;
+            std::cerr << "case2: " << res << std::endl;
+            return std::make_tuple(res, true);
         }
 
-        constexpr double delta = .66; // the magic constaint is used in the Moré-Thuente paper without explanation (Section 4, Case 3).
+        constexpr double delta = .66; // the magic constant is used in the Moré-Thuente paper (Section 4, Case 3).
         if (std::abs(t.d) < std::abs(l.d)) { // Case 3: A lower function value, derivatives of the same sign, and the magnitude of the derivative decreases.
-            const double res = (std::abs(ac - t.a) < std::abs(as - t.a)) ? ac : as;
-            return std::min(t.a + delta*(u.a - t.a), res);
+            double res = (std::abs(ac - t.a) < std::abs(as - t.a)) ? ac : as;
+            std::cerr << "ac: " << ac << " as: " << as << " res: " << res << std::endl;
+            res = std::min(t.a + delta*(u.a - t.a), res);
+            std::cerr << "case3: " << res << std::endl;
+            return std::make_tuple(res, false);
         }
 
+        assert(t.a<u.a);
         // Case 4: A lower function value, derivatives of the same sign, and the magnitude of the derivative does not decrease.
         double ae = find_cubic_minimizer(t.a, t.f, t.d, u.a, u.f, u.d);
-        return ae;
+        double res = ae;
+        std::cerr << "case4: " << res << std::endl;
+        return std::make_tuple(res, false);
     }
 
-    void line_search(const linesearch_function phi, double at, double mu, double eta) {
+    void line_search(const linesearch_function phi, const Sample phi0, const double at, const double mu, const double eta) {
         /*
            auto phi = [&](const double a) {
            double f, d;
@@ -80,21 +90,22 @@ namespace STLBFGS {
            return Sample{a, f, d};
            };
          */
-        Sample phi0 = phi(0);
+//      Sample phi0 = phi(0);
 
         auto psi = [&](const Sample &phia) {
             return Sample{ phia.a, phia.f-phi0.f-mu*phi0.d*phia.a,  phia.d-mu*phi0.d };
         };
 
         bool stage1 = true;  // use function psi instead if phi
+        bool bracketed = false;
 
         Sample phil = phi0;
         Sample phit = phi(at);
-        Sample phiu = phi(phit.a + 4.*(phit.a - phil.a));
+        Sample phiu = phit;
 
         // TODO alpha_min alpha_max nfev
         for (int i=0; i<30; i++) {
-            if (true) // TODO
+            if (!bracketed) // TODO
                 phiu = phi(phit.a + 4.*(phit.a - phil.a));
 
             std::cerr << phil.a << " " << phit.a << " " << phiu.a << std::endl;
@@ -103,16 +114,16 @@ namespace STLBFGS {
 
             if (sufficient_decrease(phi0, phit, mu) && curvature_condition(phi0, phit, eta)) {
                 std::cerr << "Yahoo!" << std::endl;
-                //          return;
+                return;
             }
 
             // Pick next step size by interpolating either phi or psi depending on which update algorithm is currently being used.
             Sample psit = psi(phit);
-            double at = stage1 ?
+            auto [at,br] = stage1 ?
                 trial_value(    phil,  phit,     phiu) :
                 trial_value(psi(phil), psit, psi(phiu));
             phit = phi(at);
-            psit = psi(phit);
+            bracketed = bracketed || br;
 
             // Decide if we want to switch to using a "Modified Updating Algorithm" (shown after theorem 3.2 in the paper)
             // by switching from using function psi to using function phi.
@@ -139,6 +150,8 @@ namespace STLBFGS {
                 phiu = phit;
                 std::cerr << 3 << std::endl;
             }
+
+
         }
     }
 
