@@ -100,12 +100,12 @@ namespace STLBFGS {
         Sample phiu = phit;
 
         // TODO alpha_min alpha_max nfev
-        for (int i=0; i<30; i++) {
+        for (int i=0; i<50; i++) {
             if (!bracketed) // TODO
                 phiu = phi(phit.a + 4.*(phit.a - phil.a));
-            assert(phil.a<phit.a); assert(phit.a<phiu.a);
 
-            std::cerr << phil.a << " " << phit.a << " " << phiu.a << std::endl;
+            std::cerr << "[" <<  phil.a << " " << phit.a << " " << phiu.a << "]" << std::endl;
+            assert(phil.a<phit.a); assert(phit.a<phiu.a);
 
 
             if (sufficient_decrease(phi0, phit, mu) && curvature_condition(phi0, phit, eta)) {
@@ -142,13 +142,19 @@ namespace STLBFGS {
             }
 
             // Force a sufficient decrease in the size of the interval of uncertainty.
-//          if (bracketed && phiu.a-phil.a >= .66*width) {
+            if (bracketed && (caseno==1 || caseno==3)/* && phiu.a-phil.a >= .66*width*/) {
+                at = (phil.a+phiu.a)/2.;
+                std::cerr << "Forcing\n";
+            }
+
+//          if (bracketed && (caseno==1 || caseno==3) && phiu.a-phil.a >= .66*width) {
 //              at = (phil.a+phiu.a)/2.;
 //              std::cerr << "Forcing\n";
 //          }
 
             phit = phi(at);
         }
+        return false;
     }
 
 }
