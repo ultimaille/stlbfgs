@@ -116,4 +116,3 @@ TEST_CASE("Table 3", "[Mor\\'e-Thuente]") {
     REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
 }
 
-
