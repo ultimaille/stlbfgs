@@ -9,6 +9,12 @@
 
 namespace STLBFGS {
 
+    /*
+    static int dir(double a, double b) {
+        return a==b ? 0 : (a<b ? 1 : -1);
+    }
+    */
+
     // f0 Value of function at starting point of line search.
     // d0 Directional derivative at starting point of line search.
     // alpha the step length.
@@ -22,46 +28,60 @@ namespace STLBFGS {
         return std::abs(phia.d) <= eta*std::abs(phi0.d);
     }
 
-    // minimizer of the cubic function that interpolates f(a), f'(a), f(b), f'(b) within the given interval ]a, b[
+    // minimizer of the cubic function that interpolates f(a), f'(a), f(b), f'(b) within the given interval
     double find_cubic_minimizer(double a, double fa, double ga, double b, double fb, double gb) {
-        assert(a<b); assert(ga<0);
+//      assert(a!=b && ((a<b && ga<0) || (b<a && gb<0)));
+        if (a>b) {
+            std::swap( a,  b);
+            std::swap(fa, fb);
+            std::swap(ga, gb);
+        }
         double z = 3.*(fa - fb)/(b - a) + ga + gb;
         double D = z*z - ga*gb;
-        if (D<=0) return std::numeric_limits<double>::max(); // no minumum
-        double w = std::sqrt(D);
+        if (D<=0) return std::numeric_limits<double>::max(); // no minumum in the interval, +inf here because of the linesearch nature
+        double w = std::sqrt(D); // this code assumes a<b; negate this value if b<a.
         return b - ((b - a)*(gb + w - z))/(gb - ga + 2.*w);
     }
 
-    // minimizer of the quadratic function that interpolates f(a), f'(a), f(b) within the given interval ]a, b[
+    // minimizer of the quadratic function that interpolates f(a), f'(a), f(b) within the given interval
     double find_quadratic_minimizer(double a, double fa, double ga, double b, double fb) {
-        assert(a<b); assert(ga<0);
+//      assert((a!=b) && ((a<b && ga<0) || (b<a && ga>0)));
         return a + (((b - a)*(b - a))*ga)/(2.*(fa - fb + (b - a)*ga));
     }
 
-    // minimizer of the quadratic function that interpolates f'(a), f'(b) within the given interval ]a, b[
+    // minimizer of the quadratic function that interpolates f'(a), f'(b) within the given interval
     // N.B. the function itself is undetermined since we miss information like f(a) or f(b); however the minimizer is well-defined
     double find_quadratic_minimizer(double a, double ga, double b, double gb) {
-        assert(a<b); assert(ga<0);
+//      assert(a!=b && ((a<b && ga<0) || (b<a && gb<0)));
         return b + ((b - a)*gb)/(ga - gb);
     }
 
+    static int sgn(double val) {
+        return (0. < val) - (val < 0.);
+    }
+
     std::tuple<double,int> trial_value(const Sample &l, const Sample &t, const Sample &u, const bool bracketed) {
-        assert(l.a<t.a); assert(t.a<u.a); assert(l.d<0);
-        std::cerr << l.d << " d " << t.d << std::endl;
+//      assert(
+//              (l.a<u.a && l.a<t.a && t.a<u.a && l.d<0)
+//              ||
+//              (u.a<l.a && u.a<t.a && t.a<l.a && l.d>0)
+//            );
+
+//        std::cerr << l.d << " d " << t.d << std::endl;
         double ac = find_cubic_minimizer(l.a, l.f, l.d, t.a, t.f, t.d);
         if (t.f > l.f) { // Case 1: a higher function value. The minimum is bracketed.
             double aq = find_quadratic_minimizer(l.a, l.f, l.d, t.a, t.f);
 //          std::cerr << "ac: " << ac << " aq: " << aq << std::endl;
 //          std::cerr << "lf: " << l.f << " tf: " << t.f <<std::endl;
             double res = (std::abs(ac - l.a) < std::abs(aq - l.a)) ? ac : (aq + ac)/2.;
-            assert(l.a<res); assert(res<t.a);
+//          assert(l.a<res); assert(res<t.a);
             return std::make_tuple(res, 1);
         }
 
         double as = find_quadratic_minimizer(l.a, l.d, t.a, t.d);
-        if (t.d > 0) { // Case 2: A lower function value and derivatives of opposite sign. The minimum is bracketed.
+        if (-1 == sgn(t.d)*sgn(l.d)) { // Case 2: A lower function value and derivatives of opposite sign. The minimum is bracketed.
             double res = (std::abs(ac - t.a) >= std::abs(as - t.a)) ? ac : as;
-            assert(l.a<res); assert(res<t.a);
+//          assert(l.a<res); assert(res<t.a);
             return std::make_tuple(res, 2);
         }
 
@@ -77,7 +97,7 @@ namespace STLBFGS {
 
 //          std::cerr << inf_right << " " << ac << " " << as << " " << res << std::endl;
     //        std::cerr << (t.a ==res) << std::endl;
-            assert(t.a<=res);
+//          assert(t.a<=res);
 //          res = std::min(t.a + delta*(u.a - t.a), res);
 //          assert(t.a<=res); assert(res<u.a);
             return std::make_tuple(res, 3);
@@ -114,7 +134,7 @@ namespace STLBFGS {
             }
 
             std::cerr << "[" <<  phil.a << " " << phit.a << " " << phiu.a << "]" << std::endl;
-            assert(phil.a<phit.a); assert(phit.a<phiu.a);
+//          assert(phil.a<phit.a); assert(phit.a<phiu.a);
 
 
             if (sufficient_decrease(phi0, phit, mu) && curvature_condition(phi0, phit, eta)) {
@@ -143,19 +163,24 @@ namespace STLBFGS {
             std::cerr << "Case: " << caseno << std::endl;
             std::cerr << "Bracketed: " << bracketed << std::endl;
 
-            double width = phiu.a - phil.a;
-            if (1==caseno || 2==caseno) {
+            double width = std::abs(phiu.a - phil.a);
+            if (1==caseno) {
                 phiu = phit;
+            } else if (2==caseno) {
+                phiu = phil;
+                phil = phit;
             } else {
                 phil = phit;
             }
 
 //          std::cerr << phil.a << "-" << phiu.a << std::endl;
 
-            at = std::max(phil.a, std::min(phiu.a, at));
+            at = phil.a<phiu.a ?
+                std::max(phil.a, std::min(phiu.a, at)) :
+                std::min(phil.a, std::max(phiu.a, at));
 
             // Force a sufficient decrease in the size of the interval of uncertainty.
-//          if (bracketed && (caseno==1 || caseno==3) && phiu.a-phil.a >= .66*width) {
+//          if (bracketed && (caseno==1 || caseno==3) && std::abs(phiu.a-phil.a) >= .66*width) {
 //              at = (phil.a+phiu.a)/2.;
 //              std::cerr << "Forcing\n";
 //          }
