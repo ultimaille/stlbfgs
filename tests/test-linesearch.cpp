@@ -51,25 +51,41 @@ template <typename T> auto square(const T &number) { return number * number; }
 
 TEST_CASE("Table 1", "[Mor\\'e-Thuente]") {
     std::cerr << "\n\nTable 1\n\n";
-    const linesearch_function func = [](const double alpha) -> Sample {
+    int nfev = 0;
+    const linesearch_function func = [&nfev](const double alpha) -> Sample {
+        nfev++;
         constexpr double beta = 2.;
         double f = -alpha/(alpha*alpha + beta);
         double g = (square(alpha)-beta)/square(beta+square(alpha));
         return { alpha, f, g };
     };
     double alpha = 1e-3;
+    nfev = 0;
     REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-1) );
+    CHECK( std::abs(alpha-1.3650)< 1e-4 );
+    CHECK( nfev == 6+1 );
     alpha = 1e-1;
+    nfev = 0;
     REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-1) );
+    CHECK( std::abs(alpha-1.4414)< 1e-4 );
+    CHECK( nfev == 3+1 );
     alpha = 1e+1;
+    nfev = 0;
     REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-1) );
+    CHECK( std::abs(alpha-10)< 1e-4 );
+    CHECK( nfev == 1+1 );
     alpha = 1e+3;
+    nfev = 0;
     REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-1) );
+    CHECK( std::abs(alpha-36.888)< 1e-4 );
+    CHECK( nfev == 4+1 );
 }
 
 TEST_CASE("Table 2", "[Mor\\'e-Thuente]") {
     std::cerr << "\n\nTable 2\n\n";
-    const linesearch_function func = [](const double alpha) -> Sample {
+    int nfev = 0;
+    const linesearch_function func = [&nfev](const double alpha) -> Sample {
+        nfev++;
         constexpr double beta = .004;
         double f = pow(alpha+beta, 5.) - 2.*pow(alpha+beta, 4.);
         double g = 5.*pow(alpha+beta, 4.) - 8.*pow(alpha+beta, 3.);
@@ -77,17 +93,30 @@ TEST_CASE("Table 2", "[Mor\\'e-Thuente]") {
     };
     double alpha = 1e-3;
     REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( std::abs(alpha-1.5960)< 1e-4 );
+    CHECK( nfev == 12+1 );
     alpha = 1e-1;
+    nfev = 0;
     REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( std::abs(alpha-1.5960)< 1e-4 );
+    CHECK( nfev == 8+1 );
     alpha = 1e+1;
+    nfev = 0;
     REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( std::abs(alpha-1.5960)< 1e-4 );
+    CHECK( nfev == 8+1 );
     alpha = 1e+3;
+    nfev = 0;
     REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( std::abs(alpha-1.5960)< 1e-4 );
+    CHECK( nfev == 11+1 );
 }
 
 TEST_CASE("Table 3", "[Mor\\'e-Thuente]") {
     std::cerr << "\n\nTable 3\n\n";
-    const linesearch_function func = [](const double alpha) -> Sample {
+    int nfev = 0;
+    const linesearch_function func = [&nfev](const double alpha) -> Sample {
+        nfev++;
         constexpr double beta = .01;
         constexpr double l = 39;
 
@@ -108,11 +137,22 @@ TEST_CASE("Table 3", "[Mor\\'e-Thuente]") {
     };
     double alpha = 1e-3;
     REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( std::abs(alpha-1.)< 1e-4 );
+    CHECK( nfev == 12+1 );
     alpha = 1e-1;
+    nfev = 0;
     REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( std::abs(alpha-1.)< 1e-4 );
+    CHECK( nfev == 12+1 );
     alpha = 1e+1;
+    nfev = 0;
     REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( std::abs(alpha-1.)< 1e-4 );
+    CHECK( nfev == 10+1 );
     alpha = 1e+3;
+    nfev = 0;
     REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( std::abs(alpha-1.)< 1e-4 );
+CHECK( nfev == 13+1 );
 }
 

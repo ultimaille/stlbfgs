@@ -8,18 +8,6 @@
 #include "linesearch.h"
 
 namespace STLBFGS {
-
-    /*
-    static int dir(double a, double b) {
-        return a==b ? 0 : (a<b ? 1 : -1);
-    }
-    */
-
-    // f0 Value of function at starting point of line search.
-    // d0 Directional derivative at starting point of line search.
-    // alpha the step length.
-    // fa Value of function at alpha.
-    // mu the sufficient decrease constant. Should take a value between 0 and 1.
     bool sufficient_decrease(Sample phi0, Sample phia, double mu) {
         return phia.f <= phi0.f + mu*phia.a*phi0.d;
     }
@@ -30,7 +18,6 @@ namespace STLBFGS {
 
     // minimizer of the cubic function that interpolates f(a), f'(a), f(b), f'(b) within the given interval
     double find_cubic_minimizer(double a, double fa, double ga, double b, double fb, double gb) {
-//      assert(a!=b && ((a<b && ga<0) || (b<a && gb<0)));
         if (a>b) {
             std::swap( a,  b);
             std::swap(fa, fb);
@@ -45,27 +32,20 @@ namespace STLBFGS {
 
     // minimizer of the quadratic function that interpolates f(a), f'(a), f(b) within the given interval
     double find_quadratic_minimizer(double a, double fa, double ga, double b, double fb) {
-//      assert((a!=b) && ((a<b && ga<0) || (b<a && ga>0)));
         return a + (((b - a)*(b - a))*ga)/(2.*(fa - fb + (b - a)*ga));
     }
 
     // minimizer of the quadratic function that interpolates f'(a), f'(b) within the given interval
     // N.B. the function itself is undetermined since we miss information like f(a) or f(b); however the minimizer is well-defined
     double find_quadratic_minimizer(double a, double ga, double b, double gb) {
-//      assert(a!=b && ((a<b && ga<0) || (b<a && gb<0)));
         return b + ((b - a)*gb)/(ga - gb);
     }
 
-    static int sgn(double val) {
-        return (0. < val) - (val < 0.);
-    }
-
     std::tuple<double,int> trial_value(const Sample &l, const Sample &t, const Sample &u, const bool bracketed) {
-//      assert(
-//              (l.a<u.a && l.a<t.a && t.a<u.a && l.d<0)
-//              ||
-//              (u.a<l.a && u.a<t.a && t.a<l.a && l.d>0)
-//            );
+        assert(
+                (l.a<u.a && l.a<t.a && t.a<u.a && l.d<0) ||
+                (l.a>u.a && l.a>t.a && t.a>u.a && l.d>0)
+              );
 
 //        std::cerr << l.d << " d " << t.d << std::endl;
         double ac = find_cubic_minimizer(l.a, l.f, l.d, t.a, t.f, t.d);
@@ -79,14 +59,14 @@ namespace STLBFGS {
         }
 
         double as = find_quadratic_minimizer(l.a, l.d, t.a, t.d);
-        if (-1 == sgn(t.d)*sgn(l.d)) { // Case 2: A lower function value and derivatives of opposite sign. The minimum is bracketed.
+        if ((l.d>0 && t.d<0) || (l.d<0 && t.d>0)) { // Case 2: A lower function value and derivatives of opposite sign. The minimum is bracketed.
             double res = (std::abs(ac - t.a) >= std::abs(as - t.a)) ? ac : as;
 //          assert(l.a<res); assert(res<t.a);
             return std::make_tuple(res, 2);
         }
 
 //      constexpr double delta = .66; // the magic constant is used in the Moré-Thuente paper (Section 4, Case 3).
-        if (std::abs(t.d) < std::abs(l.d)) { // Case 3: A lower function value, derivatives of the same sign, and the magnitude of the derivative decreases.
+        if (std::abs(t.d) <= std::abs(l.d)) { // Case 3: A lower function value, derivatives of the same sign, and the magnitude of the derivative decreases.
 //        std::cerr << "ac: " << ac << " as: " << as << std::endl;
 //            bool inf_right = ((l.d + t.d)*(t.a - l.a) > 2.*(t.f - l.f)); // the cubic tends to infinity in the direction of the step
 //            double res = (inf_right && (std::abs(ac - t.a) > std::abs(as - t.a))) ? ac : as; // TODO WHY > in O'Leary's code? It is < in the paper
@@ -104,66 +84,64 @@ namespace STLBFGS {
         }
 
         // Case 4: A lower function value, derivatives of the same sign, and the magnitude of the derivative does not decrease.
-        double res = u.a;
-        if (bracketed) {
-            res = find_cubic_minimizer(t.a, t.f, t.d, u.a, u.f, u.d);
-        }
+        double res = bracketed ?
+            find_cubic_minimizer(t.a, t.f, t.d, u.a, u.f, u.d) :
+            u.a;
         return std::make_tuple(res, 4);
     }
 
     bool line_search(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta) {
         int nfev = 0;
-        auto psi = [&](const Sample &phia) {
-            return Sample{ phia.a, phia.f-phi0.f-mu*phi0.d*phia.a,  phia.d-mu*phi0.d };
-        };
-
         bool stage1 = true;  // use function psi instead if phi
         bool bracketed = false;
 
         Sample phil = phi0;
-        Sample phit = phi(at);
-        Sample phiu = phi0;
-        ++nfev;
+        Sample phiu = {
+            std::numeric_limits<double>::quiet_NaN(),
+            std::numeric_limits<double>::quiet_NaN(),
+            std::numeric_limits<double>::quiet_NaN()
+        };
 
         // TODO alpha_min alpha_max nfev
-        for (int i=0; i<50; i++) {
-            if (!bracketed) {
-              phiu.a = phit.a + 4.*(phit.a - phil.a);
-//              phiu = phi(phit.a + 4.*(phit.a - phil.a));
-//              ++nfev; // TODO remove eval here
-            }
+        for (int i=0; i<20; i++) {
+            if (!bracketed)
+                phiu.a = at + 4.*(at - phil.a);
 
-            std::cerr << "[" <<  phil.a << " " << phit.a << " " << phiu.a << "]" << std::endl;
-//          assert(phil.a<phit.a); assert(phit.a<phiu.a);
+            Sample phit = phi(at);
+            nfev++;
 
+            std::cerr << "[" <<  phil.a << " " << phit.a << " " << phiu.a << "]\t";
 
             if (sufficient_decrease(phi0, phit, mu) && curvature_condition(phi0, phit, eta)) {
                 std::cerr << "Yahoo! " << nfev << std::endl << std::endl;
                 return true;
             }
 
-            // Pick next step size by interpolating either phi or psi depending on which update algorithm is currently being used.
-            Sample psit = psi(phit);
-
             // Decide if we want to switch to using a "Modified Updating Algorithm" (shown after theorem 3.2 in the paper)
             // by switching from using function psi to using function phi.
             // The decision follows the logic in the paragraph right before theorem 3.3 in the paper.
-            if (stage1 && psit.f<=0 && phit.d>0) {
-                stage1 = false;
-                std::cerr << "Stage 2\n";
-            }
+            auto psi = [phi0, mu](const Sample &phia) {
+                return Sample{ phia.a, phia.f-phi0.f-mu*phi0.d*phia.a, phia.d-mu*phi0.d };
+            };
+
+            // Pick next step size by interpolating either phi or psi depending on which update algorithm is currently being used.
+            stage1 = stage1 && (psi(phit).f>0 || phit.d<=0);
+
+            if (stage1)
+                std::cerr << "stage 1 ";
+            else
+                std::cerr << "stage 2 ";
 
             int caseno;
+            std::tie(at, caseno) = stage1 ?
+                trial_value(    phil,      phit,      phiu,  bracketed) :
+                trial_value(psi(phil), psi(phit), psi(phiu), bracketed);
 
-            std::tie(at,caseno) = stage1 ?
-                trial_value(    phil,  phit,     phiu,  bracketed) :
-                trial_value(psi(phil), psit, psi(phiu), bracketed);
             bracketed = bracketed || (caseno==1 || caseno==2);
 //          assert(phil.a <= at); assert(at <= phiu.a);
-            std::cerr << "Case: " << caseno << std::endl;
-            std::cerr << "Bracketed: " << bracketed << std::endl;
+            std::cerr << " case " << caseno << " bracketed " << bracketed << std::endl;
 
-            double width = std::abs(phiu.a - phil.a);
+//          double width = std::abs(phiu.a - phil.a);
             if (1==caseno) {
                 phiu = phit;
             } else if (2==caseno) {
@@ -175,9 +153,11 @@ namespace STLBFGS {
 
 //          std::cerr << phil.a << "-" << phiu.a << std::endl;
 
-            at = phil.a<phiu.a ?
-                std::max(phil.a, std::min(phiu.a, at)) :
-                std::min(phil.a, std::max(phiu.a, at));
+            if (bracketed && (caseno==1 || caseno==3)) {
+                at = phil.a<phiu.a ?
+                    std::min(phil.a + .66*(phiu.a-phil.a), at) :
+                    std::max(phil.a + .66*(phiu.a-phil.a), at);
+            }
 
             // Force a sufficient decrease in the size of the interval of uncertainty.
 //          if (bracketed && (caseno==1 || caseno==3) && std::abs(phiu.a-phil.a) >= .66*width) {
@@ -185,8 +165,9 @@ namespace STLBFGS {
 //              std::cerr << "Forcing\n";
 //          }
 
-            phit = phi(at);
-            nfev++;
+            at = phil.a<phiu.a ?
+                std::max(phil.a, std::min(phiu.a, at)) :
+                std::min(phil.a, std::max(phiu.a, at));
         }
         return false;
     }
