@@ -18,6 +18,7 @@ namespace STLBFGS {
 
     // minimizer of the cubic function that interpolates f(a), f'(a), f(b), f'(b) within the given interval
     double find_cubic_minimizer(double a, double fa, double ga, double b, double fb, double gb) {
+//  std::cerr << "\n*** cubic minimizer ***\n";
 //      std::cerr << a << " : " << b << std::endl;
 //      std::cerr << fa << " : " << fb << std::endl;
 //      std::cerr << ga << " : " << gb << std::endl;
@@ -30,6 +31,7 @@ namespace STLBFGS {
         double D = z*z - ga*gb;
         if (D<=0) return std::numeric_limits<double>::max(); // no minumum in the interval, +inf here because of the linesearch nature
         double w = std::sqrt(D); // this code assumes a<b; negate this value if b<a.
+//      std::cerr << "theta: " << z << " gamma" << w << std::endl;
 //      std::cerr << "res: " << b - ((b - a)*(gb + w - z))/(gb - ga + 2.*w);
         return b - ((b - a)*(gb + w - z))/(gb - ga + 2.*w);
     }
@@ -51,9 +53,9 @@ namespace STLBFGS {
                 (l.a>u.a && l.a>t.a && t.a>u.a && l.d>0)
               );
 
-        std::cerr << "a: " << l.a << " " << t.a << std::endl;
-        std::cerr << "f: " << l.f << " " << t.f << std::endl;
-        std::cerr << "d: " << l.d << " " << t.d << std::endl;
+//      std::cerr << "a: " << l.a << " " << t.a << std::endl;
+//      std::cerr << "f: " << l.f << " " << t.f << std::endl;
+//      std::cerr << "d: " << l.d << " " << t.d << std::endl;
         double ac = find_cubic_minimizer(l.a, l.f, l.d, t.a, t.f, t.d);
         if (t.f > l.f) { // Case 1: a higher function value. The minimum is bracketed.
             double aq = find_quadratic_minimizer(l.a, l.f, l.d, t.a, t.f);
@@ -73,12 +75,15 @@ namespace STLBFGS {
 
 //      constexpr double delta = .66; // the magic constant is used in the Moré-Thuente paper (Section 4, Case 3).
         if (std::abs(t.d) <= std::abs(l.d)) { // Case 3: A lower function value, derivatives of the same sign, and the magnitude of the derivative decreases.
-      std::cerr << "ac: " << ac << " as: " << as << std::endl;
+//    std::cerr << "ac: " << ac << " as: " << as << std::endl;
 //            bool inf_right = ((l.d + t.d)*(t.a - l.a) > 2.*(t.f - l.f)); // the cubic tends to infinity in the direction of the step
 //            double res = (inf_right && (std::abs(ac - t.a) > std::abs(as - t.a))) ? ac : as; // TODO WHY > in O'Leary's code? It is < in the paper
             double res = bracketed ?
                 (std::abs(ac - t.a) < std::abs(as - t.a) ? ac : as) :
                 (std::abs(ac - t.a) > std::abs(as - t.a) ? ac : as);
+
+                if (l.a<u.a && res<=t.a) res = as;
+                if (l.a>u.a && res>=t.a) res = as;
 //              std::cerr << res << std::endl;
 
 //          std::cerr << inf_right << " " << ac << " " << as << " " << res << std::endl;
@@ -102,11 +107,7 @@ namespace STLBFGS {
         bool bracketed = false;
 
         Sample phil = phi0;
-        Sample phiu = {
-            std::numeric_limits<double>::quiet_NaN(),
-            std::numeric_limits<double>::quiet_NaN(),
-            std::numeric_limits<double>::quiet_NaN()
-        };
+        Sample phiu = { 0, 0, 0 }; // N.B: .f and .d members are not used until the minimum is bracketed
 
         // TODO alpha_min alpha_max nfev
         for (int i=0; i<20; i++) {
@@ -130,20 +131,20 @@ namespace STLBFGS {
             // by switching from using function psi to using function phi.
             // The decision follows the logic in the paragraph right before theorem 3.3 in the paper.
             auto psi = [phi0, mu](const Sample &phia) {
-                return Sample{ phia.a, phia.f /*- phi0.f*/ - mu*phi0.d*phia.a, phia.d - mu*phi0.d };
+                return Sample{ phia.a, phia.f - phi0.f - mu*phi0.d*phia.a, phia.d - mu*phi0.d }; // TODO check why O'Leary does not have -phi0.f in her code
             };
 
             // Pick next step size by interpolating either phi or psi depending on which update algorithm is currently being used.
             stage1 = stage1 && (psi(phit).f>0 || phit.d<=0);
 
-            if (stage1)
+            if (stage1 && phit.f<= phil.f && psi(phit).f>0)
                 std::cerr << "stage 1 ";
             else
                 std::cerr << "stage 2 ";
 
             int caseno;
-            std::tie(at, caseno) = stage1 ?
-                trial_value(psi(phil), psi(phit), psi(phiu), bracketed) : // TODO NaN!
+            std::tie(at, caseno) = stage1 /*&& phit.f<= phil.f && psi(phit).f>0*/ ?
+                trial_value(psi(phil), psi(phit), psi(phiu), bracketed) :
                 trial_value(    phil,      phit,      phiu,  bracketed);
 
             std::cerr << "<" << at << ">" << std::endl;
@@ -177,7 +178,7 @@ namespace STLBFGS {
             at = phil.a<phiu.a ?
                 std::max(phil.a, std::min(phiu.a, at)) :
                 std::min(phil.a, std::max(phiu.a, at));
-          std::cerr << phil.a << " - " << phiu.a << ":" << at << std::endl;
+//        std::cerr << phil.a << " - " << phiu.a << ":" << at << std::endl;
         }
         return false;
     }

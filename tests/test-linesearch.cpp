@@ -67,8 +67,7 @@ TEST_CASE("Table 1", "[Mor\\'e-Thuente]") {
     alpha = 1e-1;
     nfev = 0;
     REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-1) );
-//    CHECK( std::abs(alpha-1.4414)< 1e-4 ); TODO divergence with O'Leary here
-    CHECK( std::abs(alpha-1.4400)< 1e-4 );
+    CHECK( std::abs(alpha-1.4414)< 1e-4 );
     CHECK( nfev == 3+1 );
     alpha = 1e+1;
     nfev = 0;
@@ -139,22 +138,22 @@ TEST_CASE("Table 3", "[Mor\\'e-Thuente]") {
     double alpha = 1e-3;
     REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
     CHECK( std::abs(alpha-1.)< 1e-4 );
-    CHECK( nfev <= 12+1 );
+    CHECK( nfev == 12+1 );
     alpha = 1e-1;
     nfev = 0;
     REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
     CHECK( std::abs(alpha-1.)< 1e-4 );
-    CHECK( nfev <= 12+1 );
+    CHECK( nfev == 12+1 );
     alpha = 1e+1;
     nfev = 0;
     REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
     CHECK( std::abs(alpha-1.)< 1e-4 );
-    CHECK( nfev <= 10+1 );
+    CHECK( nfev == 10+1 );
     alpha = 1e+3;
     nfev = 0;
     REQUIRE( line_search(func, func(0), alpha, 1e-1, 1e-1) );
     CHECK( std::abs(alpha-1.)< 1e-4 );
-    CHECK( nfev <= 13+1 );
+    CHECK( nfev == 13+1 );
 }
 
 double gamma(const double beta) {
@@ -178,10 +177,121 @@ TEST_CASE("Table 4", "[Mor\\'e-Thuente]") {
         constexpr double beta2 = 1e-3;
         return { alpha, phi(beta1, beta2, alpha), phi_diff(beta1, beta2, alpha) };
     };
+
     double alpha = 1e-3;
+    nfev = 0;
     REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-3) );
     CHECK( std::abs(alpha-0.08)< 1e-4 );
-    CHECK( nfev <= 4+1 );
+    CHECK( nfev == 4+1 );
 
+    alpha = 1e-1;
+    nfev = 0;
+    REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( std::abs(alpha-0.10)< 1e-4 );
+    CHECK( nfev == 1+1 );
+
+    alpha = 1e+1;
+    nfev = 0;
+    REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( std::abs(alpha-0.3400)< 1e-4 );
+    CHECK( nfev == 3+1 );
+
+    alpha = 1e+3;
+    nfev = 0;
+    REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( std::abs(alpha-0.8270)< 1e-4 );
+    CHECK( nfev == 4+1 );
+
+    // The tests from the paper do not enter the code path where the function is modified much.  This test does run that part
+
+    alpha = 1.;
+    nfev = 0;
+    REQUIRE( line_search(func, func(0), alpha, 0.1, 0.9) );
+    CHECK( std::abs(alpha-0.0385)< 1e-4 );
+    CHECK( nfev == 6+1 );
+}
+
+TEST_CASE("Table 5", "[Mor\\'e-Thuente]") {
+   std::cerr << "\n\nTable 5\n\n";
+    int nfev = 0;
+    const linesearch_function func = [&nfev](const double alpha) -> Sample {
+        nfev++;
+        constexpr double beta1 = 1e-2;
+        constexpr double beta2 = 1e-3;
+        return { alpha, phi(beta1, beta2, alpha), phi_diff(beta1, beta2, alpha) };
+    };
+    double alpha = 1e-3;
+    nfev = 0;
+    REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( std::abs(alpha-0.0750)< 1e-4 );
+    CHECK( nfev == 6+1 );
+
+    alpha = 1e-1;
+    nfev = 0;
+    REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( std::abs(alpha-0.0775)< 1e-4 );
+    CHECK( nfev == 3+1 );
+
+    alpha = 1e+1;
+    nfev = 0;
+    REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( std::abs(alpha-0.0732)< 1e-4 );
+    CHECK( nfev == 7+1 );
+
+    alpha = 1e+3;
+    nfev = 0;
+    REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( std::abs(alpha-0.0761)< 1e-4 );
+    CHECK( nfev == 8+1 );
+
+    // The tests from the paper do not enter the code path where the function is modified much.  This test does run that part
+
+    alpha = 1.;
+    nfev = 0;
+    REQUIRE( line_search(func, func(0), alpha, 0.1, 0.9) );
+    CHECK( std::abs(alpha-0.0040)< 1e-4 );
+    CHECK( nfev == 6+1 );
+}
+
+TEST_CASE("Table 6", "[Mor\\'e-Thuente]") {
+   std::cerr << "\n\nTable 5\n\n";
+    int nfev = 0;
+    const linesearch_function func = [&nfev](const double alpha) -> Sample {
+        nfev++;
+        constexpr double beta1 = 1e-3;
+        constexpr double beta2 = 1e-2;
+        return { alpha, phi(beta1, beta2, alpha), phi_diff(beta1, beta2, alpha) };
+    };
+    double alpha = 1e-3;
+    nfev = 0;
+    REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( std::abs(alpha-0.9281)< 1e-4 );
+    CHECK( nfev == 13+1 );
+
+    alpha = 1e-1;
+    nfev = 0;
+    REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( std::abs(alpha-0.9267)< 1e-4 );
+    CHECK( nfev == 11+1 );
+
+    alpha = 1e+1;
+    nfev = 0;
+    REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( std::abs(alpha-0.9249)< 1e-4 );
+    CHECK( nfev == 8+1 );
+
+    alpha = 1e+3;
+    nfev = 0;
+    REQUIRE( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( std::abs(alpha-0.9242)< 1e-4 );
+    CHECK( nfev == 10+1 );
+
+    // The tests from the paper do not enter the code path where the function is modified much.  This test does run that part
+
+    alpha = 1.;
+    nfev = 0;
+    REQUIRE( line_search(func, func(0), alpha, 0.1, 0.9) );
+    CHECK( std::abs(alpha-0.0434)< 1e-4 );
+    CHECK( nfev == 4+1 );
 }
 
