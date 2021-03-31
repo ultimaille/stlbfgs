@@ -78,12 +78,16 @@ namespace STLBFGS {
 //    std::cerr << "ac: " << ac << " as: " << as << std::endl;
 //            bool inf_right = ((l.d + t.d)*(t.a - l.a) > 2.*(t.f - l.f)); // the cubic tends to infinity in the direction of the step
 //            double res = (inf_right && (std::abs(ac - t.a) > std::abs(as - t.a))) ? ac : as; // TODO WHY > in O'Leary's code? It is < in the paper
+
+            if ( // the cubic minimizer may be in the wrong direction; fix it
+                    (l.a<u.a && ac<=t.a) ||
+                    (l.a>u.a && ac>=t.a)
+               ) ac = u.a;
+
             double res = bracketed ?
                 (std::abs(ac - t.a) < std::abs(as - t.a) ? ac : as) :
                 (std::abs(ac - t.a) > std::abs(as - t.a) ? ac : as);
 
-                if (l.a<u.a && res<=t.a) res = as;
-                if (l.a>u.a && res>=t.a) res = as;
 //              std::cerr << res << std::endl;
 
 //          std::cerr << inf_right << " " << ac << " " << as << " " << res << std::endl;
@@ -109,6 +113,10 @@ namespace STLBFGS {
         Sample phil = phi0;
         Sample phiu = { 0, 0, 0 }; // N.B: .f and .d members are not used until the minimum is bracketed
 
+        double width = 1e20;
+        double width1 = 2*width;
+
+
         // TODO alpha_min alpha_max nfev
         for (int i=0; i<20; i++) {
             if (!bracketed)
@@ -119,11 +127,11 @@ namespace STLBFGS {
 
 //            std::cerr << "<" << phit.f << ">" << std::endl;
 
-            std::cerr << "[" <<  phil.a << " " << phit.a << " " << phiu.a << "]\t";
+//          std::cerr << "[" <<  phil.a << " " << phit.a << " " << phiu.a << "]\t";
 //          std::cerr << "<" <<  phil.f << " " << phit.f << " " << phiu.f << ">\t";
 
             if (sufficient_decrease(phi0, phit, mu) && curvature_condition(phi0, phit, eta)) {
-                std::cerr << "Yahoo! " << nfev << std::endl << std::endl;
+//              std::cerr << "Yahoo! " << nfev << std::endl << std::endl;
                 return true;
             }
 
@@ -131,26 +139,21 @@ namespace STLBFGS {
             // by switching from using function psi to using function phi.
             // The decision follows the logic in the paragraph right before theorem 3.3 in the paper.
             auto psi = [phi0, mu](const Sample &phia) {
-                return Sample{ phia.a, phia.f - phi0.f - mu*phi0.d*phia.a, phia.d - mu*phi0.d }; // TODO check why O'Leary does not have -phi0.f in her code
+                return Sample{ phia.a, phia.f - phi0.f - mu*phi0.d*phia.a, phia.d - mu*phi0.d };
             };
 
             // Pick next step size by interpolating either phi or psi depending on which update algorithm is currently being used.
-            stage1 = stage1 && (psi(phit).f>0 || phit.d<=0);
-
-            if (stage1 && phit.f<= phil.f && psi(phit).f>0)
-                std::cerr << "stage 1 ";
-            else
-                std::cerr << "stage 2 ";
+            stage1 = stage1 && (psi(phit).f>0 /*|| phit.d<=0*/ || phit.d < std::min(mu, eta)*phi0.d);
 
             int caseno;
-            std::tie(at, caseno) = stage1 /*&& phit.f<= phil.f && psi(phit).f>0*/ ?
+            std::tie(at, caseno) = stage1 && phit.f<= phil.f && psi(phit).f>0 ?
                 trial_value(psi(phil), psi(phit), psi(phiu), bracketed) :
                 trial_value(    phil,      phit,      phiu,  bracketed);
 
-            std::cerr << "<" << at << ">" << std::endl;
+//          std::cerr << "<" << at << ">" << std::endl;
             bracketed = bracketed || (caseno==1 || caseno==2);
 //          assert(phil.a <= at); assert(at <= phiu.a);
-            std::cerr << " case " << caseno << " bracketed " << bracketed << std::endl;
+//          std::cerr << " case " << caseno << " bracketed " << bracketed << std::endl;
 
 //          double width = std::abs(phiu.a - phil.a);
             if (1==caseno) {
@@ -162,18 +165,22 @@ namespace STLBFGS {
                 phil = phit;
             }
 
-
             if (bracketed && (caseno==1 || caseno==3)) {
+                double safeguard = phil.a + .66*(phiu.a-phil.a);
                 at = phil.a<phiu.a ?
-                    std::min(phil.a + .66*(phiu.a-phil.a), at) :
-                    std::max(phil.a + .66*(phiu.a-phil.a), at);
+                    std::min(safeguard, at) :
+                    std::max(safeguard, at);
             }
 
             // Force a sufficient decrease in the size of the interval of uncertainty.
-//          if (bracketed && (caseno==1 || caseno==3) && std::abs(phiu.a-phil.a) >= .66*width) {
-//              at = (phil.a+phiu.a)/2.;
-//              std::cerr << "Forcing\n";
-//          }
+            if (bracketed) {
+                if ((caseno==1 || caseno==3) && std::abs(phiu.a-phil.a) >= .66*width1) {
+                    at = (phil.a+phiu.a)/2.;
+//                  std::cerr << "Forcing\n";
+                }
+                width1 = width;
+                width = std::abs(phiu.a-phil.a);
+            }
 
             at = phil.a<phiu.a ?
                 std::max(phil.a, std::min(phiu.a, at)) :
