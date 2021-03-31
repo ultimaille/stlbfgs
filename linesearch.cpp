@@ -42,6 +42,10 @@ namespace STLBFGS {
     }
 
     std::tuple<double,int> trial_value(const Sample &l, const Sample &t, const Sample &u, const bool bracketed) {
+//       std::cerr << "a: " << l.a << " " << t.a << std::endl;
+//       std::cerr << "f: " << l.f << " " << t.f << std::endl;
+//       std::cerr << "d: " << l.d << " " << t.d << std::endl;
+ 
         assert(
                 (l.a<u.a && l.a<t.a && t.a<u.a && l.d<0) ||
                 (l.a>u.a && l.a>t.a && t.a>u.a && l.d>0)
@@ -72,9 +76,7 @@ namespace STLBFGS {
         }
 
         // Case 4: A lower function value, derivatives of the same sign, and the magnitude of the derivative does not decrease.
-        double res = bracketed ?
-            find_cubic_minimizer(t.a, t.f, t.d, u.a, u.f, u.d) :
-            u.a;
+        double res = bracketed ? find_cubic_minimizer(t.a, t.f, t.d, u.a, u.f, u.d) : u.a;
         return std::make_tuple(res, 4);
     }
 
@@ -96,9 +98,9 @@ namespace STLBFGS {
             Sample phit = phi(at);
             nfev++;
 
-            if (sufficient_decrease(phi0, phit, mu) && curvature_condition(phi0, phit, eta)) {
+            // TODO error handling
+            if (sufficient_decrease(phi0, phit, mu) && curvature_condition(phi0, phit, eta))
                 return true;
-            }
 
             auto psi = [phi0, mu](const Sample &phia) {
                 return Sample{ phia.a, phia.f - phi0.f - mu*phi0.d*phia.a, phia.d - mu*phi0.d };
@@ -117,14 +119,13 @@ namespace STLBFGS {
             double width = std::abs(phiu.a - phil.a);
 
             // update the interval of uncertainty; note that the update does not depend on the new trial value
-            if (1==caseno) {
+            if (1==caseno)
                 phiu = phit;
-            } else if (2==caseno) {
+            else if (2==caseno) {
                 phiu = phil;
                 phil = phit;
-            } else {
+            } else
                 phil = phit;
-            }
 
             if (bracketed) {
                 if (caseno==1 || caseno==3) {
