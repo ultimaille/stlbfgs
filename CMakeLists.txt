@@ -45,5 +45,5 @@ if (UNIT_TESTS)
     add_subdirectory(tests)
 endif()
 
-#add_executable(linesearch linesearch.cpp)
+add_subdirectory(sandpit)
 

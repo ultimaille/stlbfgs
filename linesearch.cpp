@@ -42,9 +42,9 @@ namespace STLBFGS {
     }
 
     std::tuple<double,int> trial_value(const Sample &l, const Sample &t, const Sample &u, const bool bracketed) {
-//       std::cerr << "a: " << l.a << " " << t.a << std::endl;
-//       std::cerr << "f: " << l.f << " " << t.f << std::endl;
-//       std::cerr << "d: " << l.d << " " << t.d << std::endl;
+         std::cerr << "a: " << l.a << " " << t.a << std::endl;
+         std::cerr << "f: " << l.f << " " << t.f << std::endl;
+         std::cerr << "d: " << l.d << " " << t.d << std::endl;
  
         assert(
                 (l.a<u.a && l.a<t.a && t.a<u.a && l.d<0) ||
@@ -126,6 +126,7 @@ namespace STLBFGS {
                 phil = phit;
             } else
                 phil = phit;
+            std::cerr << "caseno: " << caseno << std::endl;
 
             if (bracketed) {
                 if (caseno==1 || caseno==3) {

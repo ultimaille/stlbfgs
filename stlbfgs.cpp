@@ -3,7 +3,6 @@
 #include <cmath>
 #undef NDEBUG
 #include <cassert>
-#include "linesearch.h"
 #include "stlbfgs.h"
 
 namespace STLBFGS {
@@ -119,7 +118,7 @@ namespace STLBFGS {
 
             double alpha = 1.;
             bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, 1e-3, 1e-1);
-            std::cerr << "LS OK: " << res << " alpha " << alpha << " nfev " << nfev << std::endl;
+            std::cerr << "LS " << (res? "OK " : "FAILED ") << " alpha " << alpha << " nfev " << nfev << std::endl;
 
             for (size_t j=0; j<n; j++)
                 x[j] -= p[j]*alpha;
@@ -137,7 +136,10 @@ namespace STLBFGS {
 #pragma omp parallel for reduction(max:gmax)
             for (double gi : g)
                 gmax = std::max(gmax, std::abs(gi));
-            if (gmax <= gtol) break;
+            if (gmax <= gtol) {
+//              std::cerr << "gmax: "<<  gmax << std::endl;
+            break;
+            }
         }
     }
 

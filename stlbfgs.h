@@ -3,6 +3,8 @@
 
 #include <functional>
 #include <vector>
+#include <deque>
+#include "linesearch.h"
 
 namespace STLBFGS {
     struct Optimizer {
