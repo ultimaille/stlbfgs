@@ -105,7 +105,9 @@ namespace STLBFGS {
             vector gprev = g;
             vector s(n), y(n);
 
+            int nfev = 0;
             const linesearch_function ls_func = [&](const double alpha) -> Sample {
+                nfev++;
                 vector xa(n), ga(n);
 #pragma omp parallel for
                 for (size_t j=0; j<n; j++)
@@ -117,7 +119,7 @@ namespace STLBFGS {
 
             double alpha = 1.;
             bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, 1e-3, 1e-1);
-            std::cerr << "LS OK: " << res << " alpha " << alpha << std::endl;
+            std::cerr << "LS OK: " << res << " alpha " << alpha << " nfev " << nfev << std::endl;
 
             for (size_t j=0; j<n; j++)
                 x[j] -= p[j]*alpha;
