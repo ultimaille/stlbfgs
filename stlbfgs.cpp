@@ -26,12 +26,12 @@ namespace STLBFGS {
 
     // Add a correction pair {s, y} to the optimization history
     void Optimizer::IHessian::add_correction(const vector &s, const vector &y) {
-        assert(nvars == s.size());
-        assert(nvars == y.size());
+        assert(nvars == (int)s.size());
+        assert(nvars == (int)y.size());
         S.push_front(s);
         Y.push_front(y);
-        if (S.size()>history_depth) S.pop_back();
-        if (Y.size()>history_depth) Y.pop_back();
+        if ((int)S.size()>history_depth) S.pop_back();
+        if ((int)Y.size()>history_depth) Y.pop_back();
 
         double yy = dot(y, y);
         assert(std::abs(yy) > 0);
@@ -44,8 +44,8 @@ namespace STLBFGS {
     // Nocedal and Wright, Numerical optimization (2006)
     void Optimizer::IHessian::mult(const vector &g, vector &result) {
         const int m = static_cast<int>(S.size());
-        assert(Y.size() == m);
-        assert(g.size() == nvars);
+        assert((int)Y.size() == m);
+        assert((int)g.size() == nvars);
 
         result = g;
 
@@ -123,7 +123,7 @@ namespace STLBFGS {
 
             double alpha = i ? 1. : 1./norm(g);
             assert(std::isfinite(alpha));
-            bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, 1e-3, 1e-1); // TODO expose mu and eta; find better default values
+            bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta); // TODO expose mu and eta; find better default values
             if (!res) std::cerr << "LS " << (res? "OK " : "FAILED ") << " alpha " << alpha << " nfev " << nfev << std::endl;
 
             for (int j=0; j<n; j++)
