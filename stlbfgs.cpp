@@ -123,7 +123,7 @@ namespace STLBFGS {
             double alpha = i ? 1. : 1./norm(g);
             assert(std::isfinite(alpha));
             bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, 1e-3, 1e-1); // TODO expose mu and eta; find better default values
-            std::cerr << "LS " << (res? "OK " : "FAILED ") << " alpha " << alpha << " nfev " << nfev << std::endl;
+            if (!res) std::cerr << "LS " << (res? "OK " : "FAILED ") << " alpha " << alpha << " nfev " << nfev << std::endl;
 
             for (size_t j=0; j<n; j++)
                 x[j] -= p[j]*alpha;
