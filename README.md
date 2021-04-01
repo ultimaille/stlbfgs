@@ -8,6 +8,30 @@ The project has zero external dependencies, no Eigen, nothing, plain standard li
 
 Line search routine is tested against data [2] (Tables 1-6), and L-BFGS routine is tested on problems taken from [3].
 
+# Hello world
+Here is a minimal usage example: it shows a minimization of a 2D quadratic function f(x, y) = (x-7)^2 + (y-1)^2, whose minimizer is obvious (x, y) = (7, 1):
+
+```cpp
+#include "stlbfgs.h"
+
+int main() {
+    std::vector<double> x = {10, 10};
+
+    const STLBFGS::Optimizer::func_grad_eval func = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
+        f = (x[0] - 7)*(x[0] - 7) +
+            (x[1] - 1)*(x[1] - 1);
+        g[0] = 2*(x[0] - 7);
+        g[1] = 2*(x[1] - 1);
+    };
+
+    STLBFGS::Optimizer opt(2, func);
+    opt.run(x);
+
+    return std::abs(x[0]-7)>1e-3 || std::abs(x[1]-1)>1e-3x;
+}
+
+```
+
 # Compile and run unit tests:
 ```sh
 git clone https://github.com/ssloy/stlbfgs.git &&
