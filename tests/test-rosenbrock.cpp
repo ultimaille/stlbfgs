@@ -6,7 +6,7 @@ using namespace STLBFGS;
 
 static const double xtol = 1e-3;
 
-TEST_CASE("2d Rosenbrock's function", "[L-BFGS]") {
+TEST_CASE("Rosenbrock function", "[L-BFGS]") {
     std::vector<double> sol = {-1.2, 1.0};
 
     const Optimizer::func_grad_eval rosenbrock = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
@@ -19,7 +19,7 @@ TEST_CASE("2d Rosenbrock's function", "[L-BFGS]") {
     Optimizer opt(2, rosenbrock);
     opt.run(sol);
 
-    REQUIRE(std::abs(sol[0]-1)<xtol);
-    REQUIRE(std::abs(sol[1]-1)<xtol);
+    CHECK(std::abs(sol[0]-1)<xtol);
+    CHECK(std::abs(sol[1]-1)<xtol);
 }
 

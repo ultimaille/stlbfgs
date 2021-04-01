@@ -19,7 +19,7 @@ TEST_CASE("2d quadratic", "[L-BFGS]") {
     Optimizer opt(2, func);
     opt.run(sol);
 
-    REQUIRE(std::abs(sol[0]-7)<xtol);
-    REQUIRE(std::abs(sol[1]-1)<xtol);
+    CHECK(std::abs(sol[0]-7)<xtol);
+    CHECK(std::abs(sol[1]-1)<xtol);
 }
 

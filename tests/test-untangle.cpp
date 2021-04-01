@@ -144,6 +144,6 @@ TEST_CASE("Quad mesh untangling", "[L-BFGS]") {
     ofs << m;
     ofs.close();
 
-    REQUIRE( std::abs(mindet-0.0010) < 1e-4 );
+    CHECK( std::abs(mindet-0.0010) < 1e-4 );
 }
 

@@ -6,7 +6,7 @@
 using namespace STLBFGS;
 static const double xtol = 1e-3;
 
-TEST_CASE("Wood's function", "[L-BFGS]") {
+TEST_CASE("Wood function", "[L-BFGS]") {
     const Optimizer::func_grad_eval fcn = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
         double f0 = 10*(x[1]-pow(x[0], 2));
         double f1 = 1-x[0];
@@ -28,8 +28,7 @@ TEST_CASE("Wood's function", "[L-BFGS]") {
     Optimizer opt(4, fcn);
     opt.run(x);
 
-    for (int i=0; i<4; i++) {
-        REQUIRE(std::abs(x[i]-1.) < xtol);
-    }
+    for (int i=0; i<4; i++)
+        CHECK(std::abs(x[i]-1.) < xtol);
 }
 
