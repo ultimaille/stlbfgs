@@ -37,8 +37,8 @@ struct QuadMesh {
         }
     }
 
-    int nverts() const { return points.size()/2; }
-    int nquads() const { return quads.size()/4;  }
+    int nverts() const { return static_cast<int>(points.size()/2); }
+    int nquads() const { return static_cast<int>(quads.size()/4);  }
 
     std::vector<int> quads;
     std::vector<double> points;
@@ -85,7 +85,7 @@ TEST_CASE("Quad mesh untangling", "[L-BFGS]") {
     QuadMesh m;
     int nvars = 2*m.nverts();
 
-    double mindet;
+    double mindet = 0.;
     for (int iter=0; iter<10; iter++) {
         mindet = std::numeric_limits<double>::max();
         for (int q=0; q<m.nquads(); q++) // compute min det over every quad corner

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <deque>
+#define _USE_MATH_DEFINES
 #include <cmath>
 #undef NDEBUG
 #include <cassert>
