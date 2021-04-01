@@ -12,7 +12,7 @@
 #include "stlbfgs.h"
 
 struct QuadMesh {
-    QuadMesh() { // Belinsky's Z
+    QuadMesh() { // build a Belinsky's Z quad mesh
         int size = 8;
         boundary = std::vector<bool>(size*size);
         for (int j=0; j<size; j++) {
@@ -59,18 +59,18 @@ std::ostream& operator<<(std::ostream& out, const QuadMesh &m) {
     return out;
 }
 
-constexpr double Q[4][4][2] = {
+constexpr double Q[4][4][2] = { // quadratures for every quad corner
     {{-1,-1},{1,0},{0,0},{0,1}},
     {{-1,0},{1,-1},{0,1},{0,0}},
     {{0,0},{0,-1},{1,1},{-1,0}},
     {{0,-1},{0,0},{1,0},{-1,1}}
 };
 
-
-double jacobian(const QuadMesh &m, const std::vector<double>& x, const int q, const int qc, double J[2][2]) {
+// evaluate the Jacobian matrix at the given quadrature point, return the Jacobian determinant
+double jacobian(const std::vector<int> &quads, const std::vector<double>& x, const int q, const int qc, double J[2][2]) {
      double A[2][4] = {
-         {x[m.quads[q*4+0]*2+0], x[m.quads[q*4+1]*2+0], x[m.quads[q*4+2]*2+0], x[m.quads[q*4+3]*2+0]},
-         {x[m.quads[q*4+0]*2+1], x[m.quads[q*4+1]*2+1], x[m.quads[q*4+2]*2+1], x[m.quads[q*4+3]*2+1]}
+         {x[quads[q*4+0]*2+0], x[quads[q*4+1]*2+0], x[quads[q*4+2]*2+0], x[quads[q*4+3]*2+0]},
+         {x[quads[q*4+0]*2+1], x[quads[q*4+1]*2+1], x[quads[q*4+2]*2+1], x[quads[q*4+3]*2+1]}
      };
      const double (&B)[4][2] = Q[qc];
      for (int j=0; j<2; j++) // J = A*B
@@ -89,31 +89,31 @@ TEST_CASE("Quad mesh untangling", "[bar]") {
     double mindet;
     for (int iter=0; iter<10; iter++) {
         mindet = std::numeric_limits<double>::max();
-        for (int q=0; q<m.nquads(); q++) {
+        for (int q=0; q<m.nquads(); q++) // compute min det over every quad corner
             for (int qc=0; qc<4; qc++) {
                 double J[2][2];
-                double det = jacobian(m, m.points, q, qc, J);
+                double det = jacobian(m.quads, m.points, q, qc, J);
                 mindet = std::min(mindet, det);
             }
-        }
 
-        double eps = std::sqrt(pow(1e-6, 2) + .04*pow(std::min(mindet, 0.), 2));
-//      std::cerr << "mindet: " << mindet << " eps: " << eps << std::endl;
+        double eps = std::sqrt(pow(1e-6, 2) + .04*pow(std::min(mindet, 0.), 2)); // the regularization parameter e
 
+        // compute the energy and its gradient
         const STLBFGS::Optimizer::func_grad_eval energy = [&](std::vector<double>& x, double& f, std::vector<double>& g) {
             f = 0;
             g = std::vector<double>(nvars, 0);
 
-            for (int q=0; q<m.nquads(); q++) {
-                for (int qc=0; qc<4; qc++) {
+            for (int q=0; q<m.nquads(); q++) { // sum over all quads
+                for (int qc=0; qc<4; qc++) {   // evaluate the Jacobian matrix for every quad corner
                     double J[2][2];
-                    double det = jacobian(m, x, q, qc, J);
+                    double det = jacobian(m.quads, x, q, qc, J);
 
-                    double chi = det/2. + std::sqrt(eps*eps + det*det)/2.;
-                    double chip = .5 + det/(2.*std::sqrt(eps*eps + det*det));
-                    double F = (J[0][0]*J[0][0] + J[1][1]*J[1][1] + J[1][0]*J[1][0] + J[0][1]*J[0][1])/chi;
+                    double chi = det/2. + std::sqrt(eps*eps + det*det)/2.;    // the penalty function
+                    double chip = .5 + det/(2.*std::sqrt(eps*eps + det*det)); // its derivative
+                    double F = (J[0][0]*J[0][0] + J[1][1]*J[1][1] + J[1][0]*J[1][0] + J[0][1]*J[0][1])/chi; // quad corner shape quality
                     f += F;
-                    double dfdjT[2][2] = {
+
+                    double dfdjT[2][2] = { // gradient of the energy w.r.t. the Jacobian matrix entries
                         {
                             (2*J[0][0] - J[1][1]*F*chip)/chi,
                             (2*J[1][0] + J[0][1]*F*chip)/chi
@@ -123,30 +123,22 @@ TEST_CASE("Quad mesh untangling", "[bar]") {
                             (2*J[1][1] - J[0][0]*F*chip)/chi
                         }
                     };
-                    double dfdu[4][2] = {{0,0},{0,0},{0,0},{0,0}};
+                    double dfdu[4][2] = {{0,0},{0,0},{0,0},{0,0}}; // chain rule for the actual variables
                     for (int j=0; j<4; j++) // dfdu = Q[qc]*dfdjT
                         for (int i=0; i<2; i++)
                             for (int k=0; k<2; k++)
                                 dfdu[j][i] += Q[qc][j][k]*dfdjT[k][i];
 
                     for (int i=0; i<4; i++) {
-                        if (m.boundary[m.quads[q*4+i]]) continue;
+                        if (m.boundary[m.quads[q*4+i]]) continue; // the boundary verts are locked
                         g[(m.quads[q*4+i])*2+0] += dfdu[i][0];
                         g[(m.quads[q*4+i])*2+1] += dfdu[i][1];
                     }
                 }
             }
-
-//          double nrm = 0;
-//          for (int v=0; v<nvars; v++) {
-//              nrm += g[v]*g[v];
-//          }
-//          std::cerr << "nrm: " << nrm << "\n";
-
         };
         STLBFGS::Optimizer opt(nvars, energy);
-//      opt.maxiter = 300;
-        opt.run(m.points);
+        opt.run(m.points); // inner L-BFGS loop
     }
 
     std::ofstream ofs("Z.obj", std::ios::binary);
