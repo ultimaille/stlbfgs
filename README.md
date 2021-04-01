@@ -32,7 +32,7 @@ int main() {
 
 ```
 
-# Compile and run unit tests:
+# Build and run unit tests:
 ```sh
 git clone https://github.com/ssloy/stlbfgs.git &&
 cd stlbfgs &&
