@@ -4,6 +4,7 @@
 #include <fstream>
 #include <cstring>
 #include <limits>
+#define _USE_MATH_DEFINES
 #include <cmath>
 #undef NDEBUG
 #include <cassert>
