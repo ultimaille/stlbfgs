@@ -9,9 +9,13 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
+add_executable(test-linesearch test-linesearch.cpp)
+target_link_libraries(test-linesearch PRIVATE ${CMAKE_DL_LIBS} stlbfgs Catch2::Catch2)
+
 add_executable(test-stlbfgs test-stlbfgs.cpp)
 target_link_libraries(test-stlbfgs PRIVATE ${CMAKE_DL_LIBS} stlbfgs Catch2::Catch2)
 
-add_executable(test-linesearch test-linesearch.cpp)
-target_link_libraries(test-linesearch PRIVATE ${CMAKE_DL_LIBS} stlbfgs Catch2::Catch2)
+add_executable(test-untangle test-untangle.cpp)
+target_link_libraries(test-untangle PRIVATE ${CMAKE_DL_LIBS} stlbfgs Catch2::Catch2)
+
 

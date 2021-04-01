@@ -1,4 +1,9 @@
+#define CATCH_CONFIG_MAIN
+#include <catch2/catch.hpp>
+
 #include <iostream>
+#include <fstream>
+#include <cstring>
 #include <limits>
 #include <cmath>
 #undef NDEBUG
@@ -31,8 +36,6 @@ struct QuadMesh {
                 quads.push_back(i  +(j+1)*size);
             }
         }
-
-
     }
 
     int nverts() const { return points.size()/2; }
@@ -79,12 +82,13 @@ double jacobian(const QuadMesh &m, const std::vector<double>& x, const int q, co
      return J[0][0]*J[1][1] - J[0][1]*J[1][0];
 }
 
-int main() {
+TEST_CASE("Quad mesh untangling", "[bar]") {
     QuadMesh m;
     int nvars = 2*m.nverts();
 
+    double mindet;
     for (int iter=0; iter<10; iter++) {
-        double mindet = std::numeric_limits<double>::max();
+        mindet = std::numeric_limits<double>::max();
         for (int q=0; q<m.nquads(); q++) {
             for (int qc=0; qc<4; qc++) {
                 double J[2][2];
@@ -94,7 +98,7 @@ int main() {
         }
 
         double eps = std::sqrt(pow(1e-6, 2) + .04*pow(std::min(mindet, 0.), 2));
-        std::cerr << "mindet: " << mindet << " eps: " << eps << std::endl;
+//      std::cerr << "mindet: " << mindet << " eps: " << eps << std::endl;
 
         const STLBFGS::Optimizer::func_grad_eval energy = [&](std::vector<double>& x, double& f, std::vector<double>& g) {
             f = 0;
@@ -140,14 +144,15 @@ int main() {
 //          std::cerr << "nrm: " << nrm << "\n";
 
         };
-        double f;
         STLBFGS::Optimizer opt(nvars, energy);
-        opt.maxiter = 9;
+//      opt.maxiter = 300;
         opt.run(m.points);
     }
 
-    std::cout << m <<std::endl;
+    std::ofstream ofs("Z.obj", std::ios::binary);
+    ofs << m;
+    ofs.close();
 
-    return 0;
+    REQUIRE( std::abs(mindet-0.0010) < 1e-4 );
 }
 

@@ -86,8 +86,9 @@ namespace STLBFGS {
         vector g(n), p(n);
 
         func_grad(x, f, g);
+        double step = 1./std::sqrt(dot(g, g));
         for (size_t i=0; i<maxiter; i++) {
-            {
+            if (0) {
                 std::cerr << "x: ";
                 for (double v : x) std::cerr << v << " ";
                 std::cerr << std::endl;
@@ -116,7 +117,7 @@ namespace STLBFGS {
                 return { alpha, fa, -dot(ga, p) };
             };
 
-            double alpha = 1.;
+            double alpha = step;
             bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, 1e-3, 1e-1);
             std::cerr << "LS " << (res? "OK " : "FAILED ") << " alpha " << alpha << " nfev " << nfev << std::endl;
 
@@ -131,14 +132,22 @@ namespace STLBFGS {
             }
             invH.add_correction(s, y);
 
-            if ((fprev-f)/std::max(std::max(std::abs(fprev), std::abs(f)), 1.)<=ftol) break;
+            if ((fprev-f)/std::max(std::max(std::abs(fprev), std::abs(f)), 1.) <= ftol) {
+                std::cerr << "ftol:" << (fprev-f)/std::max(std::max(std::abs(fprev), std::abs(f)), 1.) << std::endl;
+                break;
+            }
+
             double gmax = 0.;
 #pragma omp parallel for reduction(max:gmax)
             for (double gi : g)
                 gmax = std::max(gmax, std::abs(gi));
             if (gmax <= gtol) {
-//              std::cerr << "gmax: "<<  gmax << std::endl;
-            break;
+                std::cerr << "gmax: "<<  gmax << std::endl;
+                break;
+            }
+            step = 1;
+            if (i==maxiter-1) {
+                std::cerr << "reached maxiter " << std::endl;
             }
         }
     }
