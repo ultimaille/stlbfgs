@@ -1,5 +1,7 @@
 # Basic C++ L-BFGS implementation using plain STL
 
+[![Build](https://github.com/ssloy/stlbfgs/actions/workflows/continuous.yml/badge.svg)](https://github.com/ssloy/stlbfgs/actions/workflows/continuous.yml) [![Nightly](https://github.com/ssloy/stlbfgs/actions/workflows/nightly.yml/badge.svg)](https://github.com/ssloy/stlbfgs/actions/workflows/nightly.yml)
+
 L-BFGS is a quasi-Newton optimization algorithm for solving large nonlinear optimization problems [1]. It employs function value and gradient information to search for the local optimum. It uses (as the name suggests) the BGFS (Broyden-Goldfarb-Fletcher-Shanno) algorithm to approximate the Hessian matrix. The size of the memory available to store the approximation of the Hessian is limited (hence L- in the name): approximated Hessian matrix is not stored directly, but rather built from the history of past updates. This implementation uses Moré-Thuente line search algorithm [2].
 
 The project has zero external dependencies, no Eigen, nothing, plain standard library. It is a from-scratch implementation and not a wrapper/translation of the original Fortran/Matlab codes by Jorge Nocedal / Dianne O'Leary.
