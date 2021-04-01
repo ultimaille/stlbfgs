@@ -42,7 +42,7 @@ namespace STLBFGS {
     // Algorithm 7.4 (L-BFGS two-loop recursion)
     // Nocedal and Wright, Numerical optimization (2006)
     void Optimizer::IHessian::mult(const vector &g, vector &result) {
-        const size_t m = S.size();
+        const int m = static_cast<int>(S.size());
         assert(Y.size() == m);
         assert(g.size() == nvars);
 
@@ -142,7 +142,10 @@ namespace STLBFGS {
             }
 
             double gmax = 0.;
+
+#if defined(_OPENMP) && _OPENMP>=200805
 #pragma omp parallel for reduction(max:gmax)
+#endif
             for (double gi : g)
                 gmax = std::max(gmax, std::abs(gi));
             if (gmax <= gtol) {
