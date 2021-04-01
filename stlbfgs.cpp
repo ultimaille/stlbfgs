@@ -86,8 +86,8 @@ namespace STLBFGS {
         vector g(n), p(n);
 
         func_grad(x, f, g);
-        double step = 1./std::sqrt(dot(g, g));
         for (size_t i=0; i<maxiter; i++) {
+        /*
             if (0) {
                 std::cerr << "x: ";
                 for (double v : x) std::cerr << v << " ";
@@ -97,7 +97,7 @@ namespace STLBFGS {
                 std::cerr << std::endl;
                 std::cerr << "f: " << f << std::endl;
             }
-
+*/
             invH.mult(g, p);
 
             double fprev = f;
@@ -117,8 +117,8 @@ namespace STLBFGS {
                 return { alpha, fa, -dot(ga, p) };
             };
 
-            double alpha = step;
-            bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, 1e-3, 1e-1);
+            double alpha = i ? 1. : 1./norm(g);
+            bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, 1e-3, 1e-1); // TODO expose mu and eta; find better default values
             std::cerr << "LS " << (res? "OK " : "FAILED ") << " alpha " << alpha << " nfev " << nfev << std::endl;
 
             for (size_t j=0; j<n; j++)
@@ -145,7 +145,6 @@ namespace STLBFGS {
                 std::cerr << "gmax: "<<  gmax << std::endl;
                 break;
             }
-            step = 1;
             if (i==maxiter-1) {
                 std::cerr << "reached maxiter " << std::endl;
             }

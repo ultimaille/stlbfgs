@@ -1,4 +1,3 @@
-#define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 
 #include <iostream>
@@ -82,7 +81,7 @@ double jacobian(const std::vector<int> &quads, const std::vector<double>& x, con
      return J[0][0]*J[1][1] - J[0][1]*J[1][0];
 }
 
-TEST_CASE("Quad mesh untangling", "[bar]") {
+TEST_CASE("Quad mesh untangling", "[L-BFGS]") {
     QuadMesh m;
     int nvars = 2*m.nverts();
 
@@ -99,7 +98,7 @@ TEST_CASE("Quad mesh untangling", "[bar]") {
         double eps = std::sqrt(pow(1e-6, 2) + .04*pow(std::min(mindet, 0.), 2)); // the regularization parameter e
 
         // compute the energy and its gradient
-        const STLBFGS::Optimizer::func_grad_eval energy = [&](std::vector<double>& x, double& f, std::vector<double>& g) {
+        const STLBFGS::Optimizer::func_grad_eval energy = [&](const std::vector<double>& x, double& f, std::vector<double>& g) {
             f = 0;
             g = std::vector<double>(nvars, 0);
 

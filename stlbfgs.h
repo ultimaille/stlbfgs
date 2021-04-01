@@ -8,7 +8,7 @@
 
 namespace STLBFGS {
     struct Optimizer {
-        typedef std::function<void(std::vector<double>& x, double &f, std::vector<double>& g)> func_grad_eval;
+        typedef std::function<void(const std::vector<double>& x, double &f, std::vector<double>& g)> func_grad_eval;
 
         Optimizer(size_t nvars, func_grad_eval func) : func_grad(func), invH(nvars) {}
         void run(std::vector<double>& sol);
