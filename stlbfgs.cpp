@@ -14,7 +14,7 @@ namespace STLBFGS {
         assert(a.size()==b.size());
         double dot = 0;
 #pragma omp parallel for reduction(+:dot)
-        for (size_t i=0; i<a.size(); i++)
+        for (int i=0; i<(int)a.size(); i++)
             dot += a[i]*b[i];
         return dot;
     }
@@ -49,7 +49,7 @@ namespace STLBFGS {
         result = g;
 
         std::vector<double> a(m);
-        for (size_t i=0; i<m; i++) {
+        for (int i=0; i<m; i++) {
             const vector &y = Y[i];
             const vector &s = S[i];
             double sy = dot(s, y);
@@ -57,23 +57,23 @@ namespace STLBFGS {
             a[i] = dot(s, result)/sy;
             assert(std::isfinite(a[i]));
 #pragma omp parallel for
-            for (size_t j=0; j<nvars; j++)
+            for (int j=0; j<(int)nvars; j++)
                 result[j] -= a[i]*y[j];
         }
 
         if (m>0) {
 #pragma omp parallel for
-            for (size_t j=0; j<nvars; j++)
+            for (int j=0; j<(int)nvars; j++)
                 result[j] *= gamma;
         }
 
-        for (size_t i=m; i--;) {
+        for (int i=m; i--;) {
             const vector &y = Y[i];
             const vector &s = S[i];
             double b = dot(y, result)/dot(s, y);
             assert(std::isfinite(b));
 #pragma omp parallel for
-            for (size_t j=0; j<nvars; j++)
+            for (int j=0; j<(int)nvars; j++)
                 result[j] += (a[i]-b)*s[j];
         }
     }
@@ -82,14 +82,14 @@ namespace STLBFGS {
     // Algorithm 7.5
     // Nocedal and Wright, Numerical optimization (2006)
     void Optimizer::run(vector &x) {
-        const size_t n = x.size();
+        const int n = (int)x.size();
         assert(invH.nvars == n);
 
         double f;
         vector g(n), p(n);
 
         func_grad(x, f, g);
-        for (size_t i=0; i<maxiter; i++) {
+        for (int i=0; i<maxiter; i++) {
         /*
             if (0) {
                 std::cerr << "x: ";
@@ -113,7 +113,7 @@ namespace STLBFGS {
                 nfev++;
                 vector xa(n), ga(n);
 #pragma omp parallel for
-                for (size_t j=0; j<n; j++)
+                for (int j=0; j<n; j++)
                     xa[j] = x[j]-p[j]*alpha;
                 double fa;
                 func_grad(xa, fa, ga);
@@ -125,12 +125,12 @@ namespace STLBFGS {
             bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, 1e-3, 1e-1); // TODO expose mu and eta; find better default values
             if (!res) std::cerr << "LS " << (res? "OK " : "FAILED ") << " alpha " << alpha << " nfev " << nfev << std::endl;
 
-            for (size_t j=0; j<n; j++)
+            for (int j=0; j<n; j++)
                 x[j] -= p[j]*alpha;
             func_grad(x, f, g);
 
 #pragma omp parallel for
-            for (size_t j=0; j<n; j++) {
+            for (int j=0; j<n; j++) {
                 s[j] = x[j]-xprev[j];
                 y[j] = g[j]-gprev[j];
             }
