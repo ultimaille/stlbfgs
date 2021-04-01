@@ -27,7 +27,7 @@ int main() {
     STLBFGS::Optimizer opt(2, func);
     opt.run(x);
 
-    return std::abs(x[0]-7)>1e-3 || std::abs(x[1]-1)>1e-3x;
+    return std::abs(x[0]-7)>1e-3 || std::abs(x[1]-1)>1e-3;
 }
 
 ```
