@@ -15,8 +15,6 @@ Here is a minimal usage example: it shows a minimization of a 2D quadratic funct
 #include "stlbfgs.h"
 
 int main() {
-    std::vector<double> x = {10, 10};
-
     const STLBFGS::Optimizer::func_grad_eval func = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
         f = (x[0] - 7)*(x[0] - 7) +
             (x[1] - 1)*(x[1] - 1);
@@ -25,6 +23,7 @@ int main() {
     };
 
     STLBFGS::Optimizer opt(2, func);
+    std::vector<double> x = {10, 10};
     opt.run(x);
 
     return std::abs(x[0]-7)>1e-3 || std::abs(x[1]-1)>1e-3;
