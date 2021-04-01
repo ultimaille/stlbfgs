@@ -33,8 +33,9 @@ namespace STLBFGS {
         if (Y.size()>history_depth) Y.pop_back();
 
         double yy = dot(y, y);
-        assert(std::abs(yy) > 1e-14);
+        assert(std::abs(yy) > 0);
         gamma = dot(s, y)/yy;
+        assert(std::isfinite(gamma));
     }
 
     // Multiply a vector g by the inverse Hessian matrix approximation
@@ -52,8 +53,9 @@ namespace STLBFGS {
             const vector &y = Y[i];
             const vector &s = S[i];
             double sy = dot(s, y);
-            assert(std::abs(sy) > 1e-14);
+            assert(std::abs(sy) > 0);
             a[i] = dot(s, result)/sy;
+            assert(std::isfinite(a[i]));
 #pragma omp parallel for
             for (size_t j=0; j<nvars; j++)
                 result[j] -= a[i]*y[j];
@@ -69,6 +71,7 @@ namespace STLBFGS {
             const vector &y = Y[i];
             const vector &s = S[i];
             double b = dot(y, result)/dot(s, y);
+            assert(std::isfinite(b));
 #pragma omp parallel for
             for (size_t j=0; j<nvars; j++)
                 result[j] += (a[i]-b)*s[j];
@@ -118,6 +121,7 @@ namespace STLBFGS {
             };
 
             double alpha = i ? 1. : 1./norm(g);
+            assert(std::isfinite(alpha));
             bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, 1e-3, 1e-1); // TODO expose mu and eta; find better default values
             std::cerr << "LS " << (res? "OK " : "FAILED ") << " alpha " << alpha << " nfev " << nfev << std::endl;
 
