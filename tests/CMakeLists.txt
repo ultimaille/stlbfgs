@@ -20,4 +20,4 @@ FetchContent_GetProperties(Catch2)
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/contrib)
 include(Catch)
 
-catch_discover_tests(test-all)
+catch_discover_tests(test-stlbfgs-all)

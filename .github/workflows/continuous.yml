@@ -16,8 +16,8 @@ jobs:
         os: [ubuntu-latest, windows-latest] #removed ", macos-latest" because wasn't starting ?
         config: [Release, Debug, RelWithDebInfo]
         include:
- #         - os: macos-latest
- #           name: macOS
+          - os: macos-latest
+            name: macOS
           - os: ubuntu-latest
             name: Linux
           - os: windows-latest

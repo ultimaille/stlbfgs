@@ -1,9 +1,9 @@
 name: Nightly
 
-on: 
+on:
   schedule:
     - cron:  '0 4 * * *'
-    
+
 jobs:
   Continuous:
     name: ${{ matrix.name }} (${{ matrix.config }})
