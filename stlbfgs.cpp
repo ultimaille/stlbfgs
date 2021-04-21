@@ -112,23 +112,17 @@ namespace STLBFGS {
             int nfev = 0;
             const linesearch_function ls_func = [&](const double alpha) -> Sample {
                 nfev++;
-                vector xa(n), ga(n);
 #pragma omp parallel for
                 for (int j=0; j<n; j++)
-                    xa[j] = x[j]-p[j]*alpha;
-                double fa;
-                func_grad(xa, fa, ga);
-                return { alpha, fa, -dot(ga, p) };
+                    x[j] = xprev[j]-p[j]*alpha;
+                func_grad(x, f, g);
+                return { alpha, f, -dot(g, p) };
             };
 
             double alpha = i ? 1. : 1./norm(g);
             assert(std::isfinite(alpha));
             bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta); // TODO expose mu and eta; find better default values
             if (!res) std::cerr << "LS " << (res? "OK " : "FAILED ") << " alpha " << alpha << " nfev " << nfev << std::endl;
-
-            for (int j=0; j<n; j++)
-                x[j] -= p[j]*alpha;
-            func_grad(x, f, g);
 
 #pragma omp parallel for
             for (int j=0; j<n; j++) {

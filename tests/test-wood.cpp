@@ -27,6 +27,8 @@ TEST_CASE("Wood function", "[L-BFGS]") {
 
     std::vector<double> x = {-3, -1, -3, -1};
     Optimizer opt(4, fcn);
+    opt.mu  = 1e-4;
+    opt.eta = 1e-1;
     opt.run(x);
 
     for (int i=0; i<4; i++)

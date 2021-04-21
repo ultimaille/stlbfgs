@@ -33,7 +33,7 @@ namespace STLBFGS {
 
         // Line search parameters: the step size must satisfy Wolfe conditions with these parameters
         double mu  = 1e-4; // Armijo rule (sufficient decrease) constant
-        double eta = 1e-1; // curvature condition constant
+        double eta = 9e-1; // curvature condition constant
     };
 }
 
