@@ -40,7 +40,7 @@ endif()
 set_target_properties(stlbfgs PROPERTIES SOVERSION 1.0)
 
 
-option(STLBFGS_UNIT_TESTS "UNIT_TESTS" OFF)
+option(STLBFGS_UNIT_TESTS "STLBFGS_UNIT_TESTS" OFF)
 if (STLBFGS_UNIT_TESTS)
     add_subdirectory(tests)
 endif()
