@@ -45,5 +45,9 @@ if (STLBFGS_UNIT_TESTS)
     add_subdirectory(tests)
 endif()
 
-add_subdirectory(sandpit)
+add_executable(stlbfgs-helloworld helloworld.cpp)
+target_link_libraries(stlbfgs-helloworld ${CMAKE_DL_LIBS} stlbfgs)
+IF (NOT WIN32)
+  target_link_libraries(stlbfgs-helloworld m)
+ENDIF()
 

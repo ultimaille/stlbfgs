@@ -30,6 +30,7 @@ namespace STLBFGS {
         int maxiter = 100;   // Maximum number of function evaluations
         double ftol = 1e-6;  // The iteration stops when (f^k - f^{k+1})/max{|f^k|,|f^{k+1}|,1} <= ftol
         double gtol = 1e-14; // The iteration will stop when max{|g_i|, i = 1, ..., n} <= gtol
+        double gmax = 1e-14; // The iteration will stop when ||g||/max(1,||x||) <= gmax
 
         // Line search parameters: the step size must satisfy Wolfe conditions with these parameters
         double mu  = 1e-4; // Armijo rule (sufficient decrease) constant

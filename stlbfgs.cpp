@@ -136,17 +136,22 @@ namespace STLBFGS {
                 break;
             }
 
-            double gmax = 0.;
+            if (norm(g)/std::max(1., norm(x))<=gtol) {
+                std::cerr << "||g||/max(1,||x||) <= " << gtol << std::endl;
+                break;
+            }
 
+            double gmax_ = 0.;
 #if defined(_OPENMP) && _OPENMP>=200805
 #pragma omp parallel for reduction(max:gmax)
 #endif
             for (double gi : g)
-                gmax = std::max(gmax, std::abs(gi));
-            if (gmax <= gtol) {
+                gmax_ = std::max(gmax_, std::abs(gi));
+            if (gmax_ <= gmax) {
                 std::cerr << "gmax: "<<  gmax << std::endl;
                 break;
             }
+
             if (i==maxiter-1) {
                 std::cerr << "reached maxiter " << std::endl;
             }
