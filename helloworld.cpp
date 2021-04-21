@@ -15,7 +15,7 @@ int main() {
 
     std::cout << "Result: x=" << x[0] << ", y=" << x[1] << std::endl;
 
-    if (std::abs(x[0]-7)<1e-3 || std::abs(x[1]-1)<1e-3) {
+    if (std::abs(x[0]-7)<1e-3 && std::abs(x[1]-1)<1e-3) {
         std::cout << "Optimization succeeded" << std::endl;
         return 0;
     } else {
