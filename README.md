@@ -37,7 +37,7 @@ git clone https://github.com/ssloy/stlbfgs.git &&
 cd stlbfgs &&
 mkdir build &&
 cd build &&
-cmake -DUNIT_TESTS:BOOL=ON .. &&
+cmake -DSTLBFGS_UNIT_TESTS:BOOL=ON .. &&
 make -j &&
 cd tests &&
 ctest
