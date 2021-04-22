@@ -80,8 +80,7 @@ namespace STLBFGS {
         return std::make_tuple(res, 4);
     }
 
-    bool line_search(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta) {
-        int nfev = 0;
+    bool line_search(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta, const double stpmin, const double stpmax, const int lsmaxfev) {
         bool stage1 = true;  // use function psi instead if phi
         bool bracketed = false;
 
@@ -90,13 +89,11 @@ namespace STLBFGS {
 
         double width_prev = std::numeric_limits<double>::max();
 
-        // TODO alpha_min alpha_max nfev
-        for (int i=0; i<20; i++) {
+        for (int nfev=0; nfev<lsmaxfev; nfev++) {
             if (!bracketed)
                 phiu.a = at + 4.*(at - phil.a);
 
             Sample phit = phi(at);
-            nfev++;
 
             // TODO error handling
             if (sufficient_decrease(phi0, phit, mu) && curvature_condition(phi0, phit, eta))
@@ -145,6 +142,10 @@ namespace STLBFGS {
             at = phil.a<phiu.a ? // force the step to be within the interval bounds
                 std::max(phil.a, std::min(phiu.a, at)) :
                 std::min(phil.a, std::max(phiu.a, at));
+            if (at<stpmin || at>stpmax) {
+                at = std::max(stpmin, std::min(stpmax, at));
+                break;
+            }
         }
         return false;
     }

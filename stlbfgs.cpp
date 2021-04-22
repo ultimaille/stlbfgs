@@ -105,9 +105,7 @@ namespace STLBFGS {
             invH.mult(g, p);
 
             double fprev = f;
-            vector xprev = x;
-            vector gprev = g;
-            vector s(n), y(n);
+            vector xprev = x, gprev = g;
 
             int nfev = 0;
             const linesearch_function ls_func = [&](const double alpha) -> Sample {
@@ -121,9 +119,13 @@ namespace STLBFGS {
 
             double alpha = i ? 1. : 1./norm(g);
             assert(std::isfinite(alpha));
-            bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta); // TODO expose mu and eta; find better default values
-            if (!res) std::cerr << "LS " << (res? "OK " : "FAILED ") << " alpha " << alpha << " nfev " << nfev << std::endl;
+            bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta);
+            if (!res) {
+                std::cerr << "Linesearch failed, step = " << alpha << std::endl;
+                break;
+            }
 
+            vector s(n), y(n);
 #pragma omp parallel for
             for (int j=0; j<n; j++) {
                 s[j] = x[j]-xprev[j];
