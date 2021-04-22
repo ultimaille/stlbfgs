@@ -119,7 +119,7 @@ namespace STLBFGS {
 
             double alpha = i ? 1. : 1./norm(g);
             assert(std::isfinite(alpha));
-            bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta);
+            bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta, lsmaxfev);
             if (!res) {
                 if (verbose) std::cerr << "Linesearch failed, step = " << alpha << std::endl;
                 break;

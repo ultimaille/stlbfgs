@@ -80,7 +80,7 @@ namespace STLBFGS {
         return std::make_tuple(res, 4);
     }
 
-    bool line_search(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta, const double stpmin, const double stpmax, const int lsmaxfev) {
+    bool line_search(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta, const int lsmaxfev) {
         bool stage1 = true;  // use function psi instead if phi
         bool bracketed = false;
 
@@ -95,6 +95,7 @@ namespace STLBFGS {
 
             Sample phit = phi(at);
 
+            // TODO stpmin/stpmax
             // TODO error handling
             if (sufficient_decrease(phi0, phit, mu) && curvature_condition(phi0, phit, eta))
                 return true;
@@ -130,10 +131,14 @@ namespace STLBFGS {
                     if (std::abs(phiu.a-phil.a) >= .66*width_prev) // force a sufficient decrease in the size of the interval of uncertainty.
                         at = (phil.a+phiu.a)/2.;
                     else { // safeguard the trial value
-                        double safeguard = phil.a + .66*(phiu.a-phil.a); // the magic constant is used in the Moré-Thuente paper (Section 4, Case 3).
+                        double safeguard1 = phil.a + .66*(phiu.a-phil.a); // the magic constant is used in the Moré-Thuente paper (Section 4, Case 3).
                         at = phil.a<phiu.a ?
-                            std::min(safeguard, at) :
-                            std::max(safeguard, at);
+                            std::min(safeguard1, at) :
+                            std::max(safeguard1, at);
+                        double safeguard2 = phil.a + .001*(phiu.a-phil.a);
+                        at = phil.a>phiu.a ?
+                            std::min(safeguard2, at) :
+                            std::max(safeguard2, at);
                     }
                 }
                 width_prev = width;
@@ -142,13 +147,8 @@ namespace STLBFGS {
             at = phil.a<phiu.a ? // force the step to be within the interval bounds
                 std::max(phil.a, std::min(phiu.a, at)) :
                 std::min(phil.a, std::max(phiu.a, at));
-            if (at<stpmin || at>stpmax) {
-                at = std::max(stpmin, std::min(stpmax, at));
-                break;
-            }
         }
         return false;
     }
-
 }
 
