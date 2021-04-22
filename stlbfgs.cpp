@@ -121,7 +121,7 @@ namespace STLBFGS {
             assert(std::isfinite(alpha));
             bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta);
             if (!res) {
-                std::cerr << "Linesearch failed, step = " << alpha << std::endl;
+                if (verbose) std::cerr << "Linesearch failed, step = " << alpha << std::endl;
                 break;
             }
 
@@ -134,28 +134,28 @@ namespace STLBFGS {
             invH.add_correction(s, y);
 
             if ((fprev-f)/std::max(std::max(std::abs(fprev), std::abs(f)), 1.) <= ftol) {
-                std::cerr << "ftol:" << (fprev-f)/std::max(std::max(std::abs(fprev), std::abs(f)), 1.) << std::endl;
+                if (verbose) std::cerr << "(f^k - f^{k+1})/max{|f^k|,|f^{k+1}|,1} <= " << ftol << std::endl;
                 break;
             }
 
             if (norm(g)/std::max(1., norm(x))<=gtol) {
-                std::cerr << "||g||/max(1,||x||) <= " << gtol << std::endl;
+                if (verbose) std::cerr << "||g||/max(1,||x||) <= " << gtol << std::endl;
                 break;
             }
 
             double gmax_ = 0.;
 #if defined(_OPENMP) && _OPENMP>=200805
-#pragma omp parallel for reduction(max:gmax)
+#pragma omp parallel for reduction(max:gmax_)
 #endif
             for (double gi : g)
                 gmax_ = std::max(gmax_, std::abs(gi));
             if (gmax_ <= gmax) {
-                std::cerr << "gmax: "<<  gmax << std::endl;
+                if (verbose) std::cerr << "max{|g_i|, i = 1, ..., n} <= " <<  gmax << std::endl;
                 break;
             }
 
             if (i==maxiter-1) {
-                std::cerr << "reached maxiter " << std::endl;
+                if (verbose) std::cerr << "reached maxiter" << std::endl;
             }
         }
     }
