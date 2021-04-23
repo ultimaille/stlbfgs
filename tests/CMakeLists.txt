@@ -12,12 +12,12 @@ FetchContent_MakeAvailable(Catch2)
 
 FILE(GLOB SRCTEST *.cpp)
 
-add_executable(test-stlbfgs-all ${SRCTEST})
+add_executable(stlbfgs-test-all ${SRCTEST})
 
-target_link_libraries(test-stlbfgs-all PRIVATE ${CMAKE_DL_LIBS} stlbfgs Catch2::Catch2)
+target_link_libraries(stlbfgs-test-all PRIVATE ${CMAKE_DL_LIBS} stlbfgs Catch2::Catch2)
 
 FetchContent_GetProperties(Catch2)
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/contrib)
 include(Catch)
 
-catch_discover_tests(test-stlbfgs-all)
+catch_discover_tests(stlbfgs-test-all)

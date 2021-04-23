@@ -80,7 +80,7 @@ namespace STLBFGS {
         return std::make_tuple(res, 4);
     }
 
-    bool line_search(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta, const int lsmaxfev) {
+    bool line_search(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta, const double xtol, const int lsmaxfev) {
         bool stage1 = true;  // use function psi instead if phi
         bool bracketed = false;
 
@@ -94,6 +94,10 @@ namespace STLBFGS {
                 phiu.a = at + 4.*(at - phil.a);
 
             Sample phit = phi(at);
+
+            if (bracketed && std::abs(phiu.a - phil.a) < std::max(phiu.a, phil.a)*xtol) {
+                return false;
+            }
 
             // TODO stpmin/stpmax
             // TODO error handling
