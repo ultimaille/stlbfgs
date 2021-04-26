@@ -45,7 +45,7 @@ namespace STLBFGS {
 //       std::cerr << "a: " << l.a << " " << t.a << std::endl;
 //       std::cerr << "f: " << l.f << " " << t.f << std::endl;
 //       std::cerr << "d: " << l.d << " " << t.d << std::endl;
- 
+
         assert(
                 (l.a<u.a && l.a<t.a && t.a<u.a && l.d<0) ||
                 (l.a>u.a && l.a>t.a && t.a>u.a && l.d>0)
@@ -95,14 +95,14 @@ namespace STLBFGS {
 
             Sample phit = phi(at);
 
-            if (bracketed && std::abs(phiu.a - phil.a) < std::max(phiu.a, phil.a)*xtol) {
-                return false;
-            }
-
             // TODO stpmin/stpmax
             // TODO error handling
             if (sufficient_decrease(phi0, phit, mu) && curvature_condition(phi0, phit, eta))
                 return true;
+
+            if (bracketed && std::abs(phiu.a - phil.a) < std::max(phiu.a, phil.a)*xtol) {
+                return false;
+            }
 
             auto psi = [phi0, mu](const Sample &phia) {
                 return Sample{ phia.a, phia.f - phi0.f - mu*phi0.d*phia.a, phia.d - mu*phi0.d };

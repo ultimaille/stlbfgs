@@ -58,15 +58,13 @@ namespace STLBFGS {
             a[i] = dot(s, result)/sy;
             assert(std::isfinite(a[i]));
 #pragma omp parallel for
-            for (int j=0; j<(int)nvars; j++)
+            for (int j=0; j<nvars; j++)
                 result[j] -= a[i]*y[j];
         }
 
-        if (m>0) {
 #pragma omp parallel for
-            for (int j=0; j<(int)nvars; j++)
-                result[j] *= gamma;
-        }
+        for (int j=0; j<nvars; j++)
+            result[j] *= gamma;
 
         for (int i=m; i--;) {
             const vector &y = Y[i];
@@ -74,7 +72,7 @@ namespace STLBFGS {
             double b = dot(y, result)/dot(s, y);
             assert(std::isfinite(b));
 #pragma omp parallel for
-            for (int j=0; j<(int)nvars; j++)
+            for (int j=0; j<nvars; j++)
                 result[j] += (a[i]-b)*s[j];
         }
     }
@@ -91,18 +89,9 @@ namespace STLBFGS {
 
         func_grad(x, f, g);
         for (int i=0; i<maxiter; i++) {
-        /*
-            if (0) {
-                std::cerr << "x: ";
-                for (double v : x) std::cerr << v << " ";
-                std::cerr << std::endl;
-                std::cerr << "g: ";
-                for (double v : g) std::cerr << v << " ";
-                std::cerr << std::endl;
-                std::cerr << "f: " << f << std::endl;
-            }
-*/
             invH.mult(g, p);
+
+            assert(-dot(g, p)<0);
 
             double fprev = f;
             vector xprev = x, gprev = g;
