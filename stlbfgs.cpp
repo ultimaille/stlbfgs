@@ -26,8 +26,8 @@ namespace STLBFGS {
 
     // Add a correction pair {s, y} to the optimization history
     void Optimizer::IHessian::add_correction(const vector &s, const vector &y) {
-        assert(nvars == (int)s.size());
-        assert(nvars == (int)y.size());
+        assert(y.size() == s.size());
+        assert(!S.size() || s.size()==S[0].size());
         S.push_front(s);
         Y.push_front(y);
         if ((int)S.size()>history_depth) S.pop_back();
@@ -43,9 +43,9 @@ namespace STLBFGS {
     // Algorithm 7.4 (L-BFGS two-loop recursion)
     // Nocedal and Wright, Numerical optimization (2006)
     void Optimizer::IHessian::mult(const vector &g, vector &result) {
-        const int m = static_cast<int>(S.size());
+        const int nvars = static_cast<int>(g.size());
+        const int m     = static_cast<int>(S.size());
         assert((int)Y.size() == m);
-        assert((int)g.size() == nvars);
 
         result = g;
 
@@ -53,6 +53,8 @@ namespace STLBFGS {
         for (int i=0; i<m; i++) {
             const vector &y = Y[i];
             const vector &s = S[i];
+            assert((int)y.size() == nvars && (int)s.size() == nvars);
+
             double sy = dot(s, y);
             assert(std::abs(sy) > 0);
             a[i] = dot(s, result)/sy;
@@ -82,7 +84,7 @@ namespace STLBFGS {
     // Nocedal and Wright, Numerical optimization (2006)
     void Optimizer::run(vector &x) {
         const int n = (int)x.size();
-        assert(invH.nvars == n);
+//        assert(invH.nvars == n);
 
         double f;
         vector g(n), p(n);

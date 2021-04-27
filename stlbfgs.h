@@ -10,17 +10,17 @@ namespace STLBFGS {
     struct Optimizer {
         typedef std::function<void(const std::vector<double>& x, double &f, std::vector<double>& g)> func_grad_eval;
 
-        Optimizer(int nvars, func_grad_eval func) : func_grad(func), invH(nvars) {}
+        Optimizer(/*int nvars, */func_grad_eval func) : func_grad(func), invH(/*nvars*/) {}
         void run(std::vector<double>& sol);
 
         const func_grad_eval func_grad;
 
         struct IHessian {
-            IHessian(int n) : nvars(n) {}
+//          IHessian(int n) : nvars(n) {}
             void mult(const std::vector<double> &g, std::vector<double> &result);
             void add_correction(const std::vector<double>&s, const std::vector<double>& y);
 
-            const int nvars;
+//          const int nvars;
             int history_depth = 10;
             typedef std::deque<std::vector<double>> history;
             history S = {};

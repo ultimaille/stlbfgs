@@ -16,7 +16,7 @@ TEST_CASE("Rosenbrock function", "[L-BFGS]") {
 
     };
 
-    Optimizer opt(2, rosenbrock);
+    Optimizer opt(rosenbrock);
     opt.run(sol);
 
     CHECK(std::abs(sol[0]-1)<xtol);

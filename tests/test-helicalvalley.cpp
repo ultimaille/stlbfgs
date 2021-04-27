@@ -34,7 +34,7 @@ TEST_CASE("Helical valley function", "[L-BFGS]") {
     };
 
     std::vector<double> x = {-1, 0, 0};
-    Optimizer opt(x.size(), fcn);
+    Optimizer opt(fcn);
     opt.run(x);
 
     CHECK( std::abs(x[0]-1) < xtol );
