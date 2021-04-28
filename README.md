@@ -43,6 +43,9 @@ cd tests &&
 ctest
 ```
 
+# TODO
+Check [4] for preconditioning
+
 # References
 **[1]** Dong C. Liu, Jorge Nocedal. On the limited memory BFGS method for large scale optimization. Mathematical Programming (1989).
 
@@ -50,3 +53,4 @@ ctest
 
 **[3]** Jorge J. Moré, Burton S. Garbow, Kenneth E. Hillstrom, "Testing Unconstrained Optimization Software", ACM Transactions on Mathematical Software  (1981)
 
+**[3]** Gilbert JC, Lemaréchal C. The module M1QN3. INRIA Rep., version. 2006;3:21.
