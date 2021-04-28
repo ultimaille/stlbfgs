@@ -53,4 +53,4 @@ Check [4] for preconditioning
 
 **[3]** Jorge J. Moré, Burton S. Garbow, Kenneth E. Hillstrom, "Testing Unconstrained Optimization Software", ACM Transactions on Mathematical Software  (1981)
 
-**[3]** Gilbert JC, Lemaréchal C. The module M1QN3. INRIA Rep., version. 2006;3:21.
+**[4]** Gilbert JC, Lemaréchal C. The module M1QN3. INRIA Rep., version. 2006;3:21.
