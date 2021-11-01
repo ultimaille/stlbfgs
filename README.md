@@ -22,7 +22,7 @@ int main() {
         g[1] = 2*(x[1] - 1);
     };
 
-    STLBFGS::Optimizer opt(2, func);
+    STLBFGS::Optimizer opt{func};
     std::vector<double> x = {10, 10};
     opt.run(x);
 
@@ -38,7 +38,7 @@ cd stlbfgs &&
 mkdir build &&
 cd build &&
 cmake -DSTLBFGS_UNIT_TESTS:BOOL=ON .. &&
-make -j &&
+cmake --build . -j &&
 cd tests &&
 ctest
 ```
