@@ -25,13 +25,13 @@ namespace STLBFGS {
         const func_grad_eval func_grad;
         IHessian invH = {};  // current inverse Hessian approximation
 
-        // user parameters
+        // L-BFGS user parameters
         int maxiter = 10000; // maximum number of quasi-Newton updates
         double ftol = 1e-6;  // the iteration stops when (f^k - f^{k+1})/max{|f^k|,|f^{k+1}|,1} <= ftol
         double gtol = 1e-14; // the iteration stops when ||g||/max(1,||x||) <= gtol
         double gmax = 1e-14; // the iteration stops when max{|g_i|, i = 1, ..., n} <= gmax
 
-        // Line search parameters: the step size must satisfy Wolfe conditions with these parameters
+        // Line search user parameters: the step size must satisfy Wolfe conditions with these parameters
         double mu  = 1e-4; // sufficient decrease constant (Armijo rule)
         double eta = 9e-1; // curvature condition constant
 //      double lsxtol = 1e-6; // TODO move all line search parameters here
