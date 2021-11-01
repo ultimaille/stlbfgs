@@ -16,7 +16,7 @@ TEST_CASE("2d quadratic", "[L-BFGS]") {
         g[1] = 2*(x[1] - 1);
     };
 
-    Optimizer opt(func);
+    Optimizer opt{func};
     opt.run(sol);
 
     CHECK(std::abs(sol[0]-7)<xtol);

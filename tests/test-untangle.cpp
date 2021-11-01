@@ -137,7 +137,7 @@ TEST_CASE("Quad mesh untangling", "[L-BFGS]") {
                 }
             }
         };
-        STLBFGS::Optimizer opt(energy);
+        STLBFGS::Optimizer opt{energy};
         opt.run(m.points); // inner L-BFGS loop
     }
 

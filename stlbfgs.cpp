@@ -42,7 +42,7 @@ namespace STLBFGS {
     // Multiply a vector g by the inverse Hessian matrix approximation
     // Algorithm 7.4 (L-BFGS two-loop recursion)
     // Nocedal and Wright, Numerical optimization (2006)
-    void Optimizer::IHessian::mult(const vector &g, vector &result) {
+    void Optimizer::IHessian::mult(const vector &g, vector &result) const {
         const int nvars = static_cast<int>(g.size());
         const int m     = static_cast<int>(S.size());
         assert((int)Y.size() == m);
