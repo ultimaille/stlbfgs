@@ -7,6 +7,7 @@ endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 find_package(OpenMP)
 if(OPENMP_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -29,9 +30,6 @@ endif()
 
 file(GLOB SOURCES *.cpp *.h)
 add_library(stlbfgs ${SOURCES})
-
-set (CMAKE_CXX_STANDARD 17)
-set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(OpenMP_CXX_FOUND)
     target_link_libraries(stlbfgs OpenMP::OpenMP_CXX)
