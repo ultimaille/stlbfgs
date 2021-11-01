@@ -83,26 +83,21 @@ namespace STLBFGS {
     bool line_search(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta, const double xtol, const int lsmaxfev) {
         bool stage1 = true;  // use function psi instead if phi
         bool bracketed = false;
-
         Sample phil = phi0;
         Sample phiu = { 0, 0, 0 }; // N.B: .f and .d members are not used until the minimum is bracketed
-
         double width_prev = std::numeric_limits<double>::max();
 
         for (int nfev=0; nfev<lsmaxfev; nfev++) {
             if (!bracketed)
                 phiu.a = at + 4.*(at - phil.a);
-
             Sample phit = phi(at);
 
             // TODO stpmin/stpmax
             // TODO error handling
             if (sufficient_decrease(phi0, phit, mu) && curvature_condition(phi0, phit, eta))
                 return true;
-
-            if (bracketed && std::abs(phiu.a - phil.a) < std::max(phiu.a, phil.a)*xtol) {
+            if (bracketed && std::abs(phiu.a - phil.a) < std::max(phiu.a, phil.a)*xtol)
                 return false;
-            }
 
             auto psi = [phi0, mu](const Sample &phia) {
                 return Sample{ phia.a, phia.f - phi0.f - mu*phi0.d*phia.a, phia.d - mu*phi0.d };

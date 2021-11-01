@@ -7,7 +7,6 @@
 #include "stlbfgs.h"
 
 namespace STLBFGS {
-
     typedef std::vector<double> vector;
 
     // compute dot product <a,b>
@@ -91,8 +90,23 @@ namespace STLBFGS {
 
         func_grad(x, f, g);
         for (int i=0; i<maxiter; i++) {
-            invH.mult(g, p);
+            if (norm(g)/std::max(1., norm(x))<=gtol) {
+                if (verbose) std::cerr << "||g||/max(1,||x||) <= " << gtol << std::endl;
+                break;
+            }
 
+            double gmax_ = 0.;
+#if defined(_OPENMP) && _OPENMP>=200805
+#pragma omp parallel for reduction(max:gmax_)
+#endif
+            for (double gi : g)
+                gmax_ = std::max(gmax_, std::abs(gi));
+            if (gmax_ <= gmax) {
+                if (verbose) std::cerr << "max{|g_i|, i = 1, ..., n} <= " <<  gmax << std::endl;
+                break;
+            }
+
+            invH.mult(g, p);
             assert(-dot(g, p)<0);
 
             double fprev = f;
@@ -129,25 +143,8 @@ namespace STLBFGS {
                 break;
             }
 
-            if (norm(g)/std::max(1., norm(x))<=gtol) {
-                if (verbose) std::cerr << "||g||/max(1,||x||) <= " << gtol << std::endl;
-                break;
-            }
-
-            double gmax_ = 0.;
-#if defined(_OPENMP) && _OPENMP>=200805
-#pragma omp parallel for reduction(max:gmax_)
-#endif
-            for (double gi : g)
-                gmax_ = std::max(gmax_, std::abs(gi));
-            if (gmax_ <= gmax) {
-                if (verbose) std::cerr << "max{|g_i|, i = 1, ..., n} <= " <<  gmax << std::endl;
-                break;
-            }
-
-            if (i==maxiter-1) {
+            if (i==maxiter-1)
                 if (verbose) std::cerr << "reached maxiter" << std::endl;
-            }
         }
     }
 
