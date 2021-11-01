@@ -1,6 +1,7 @@
 #include <tuple>
 #include <iostream>
 #include <cmath>
+#include <algorithm>
 #include <limits>
 #undef NDEBUG
 #include <cassert>

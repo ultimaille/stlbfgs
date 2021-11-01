@@ -2,6 +2,7 @@
 #include <deque>
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <algorithm>
 #undef NDEBUG
 #include <cassert>
 #include "stlbfgs.h"
