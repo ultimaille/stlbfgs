@@ -26,7 +26,7 @@ TEST_CASE("Box' three-dimensional function", "[L-BFGS]") {
 
     std::vector<double> x = {0., 10., 20.};
     Optimizer opt{fcn};
-    opt.ftol = 1e-9;
+    opt.ftol = 1e-11;
     opt.run(x);
 
     double f;

@@ -1,4 +1,5 @@
 #include <catch2/catch.hpp>
+#include <iostream>
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -28,10 +29,7 @@ TEST_CASE("Brown and Dennis function", "[L-BFGS]") {
 
     std::vector<double> x = {25, 5, -5, -1};
     Optimizer opt{fcn};
-    opt.ftol = 1e-14;
-    opt.mu  = 1e-4;
-    opt.eta = 1e-1;
-
+    opt.ftol = 1e-8;
     opt.run(x);
 
     double f;
@@ -41,7 +39,8 @@ TEST_CASE("Brown and Dennis function", "[L-BFGS]") {
     CHECK( std::abs(f-85822.2)<0.1 );
 
     std::vector<double> globmin = {-11.594439904762162, 13.203630051207202, -0.4034394881768612, 0.2367787744557347};
-//  for (int i : {0,1,2,3,4}) // TODO push ftol and stuff to limits, obtain linesearch failure
-//      CHECK( std::abs(x[i]-globmin[i])<xtol );
+
+    for (int i : {0,1,2,3})
+        CHECK( std::abs(x[i]-globmin[i])<xtol );
 }
 

@@ -8,8 +8,6 @@
 #include "stlbfgs.h"
 
 namespace STLBFGS {
-    typedef std::vector<double> vector;
-
     // compute dot product <a,b>
     double dot(const vector &a, const vector &b) {
         assert(a.size()==b.size());
@@ -26,17 +24,45 @@ namespace STLBFGS {
 
     // Add a correction pair {s, y} to the optimization history
     void Optimizer::IHessian::add_correction(const vector &s, const vector &y) {
-        assert(y.size() == s.size());
-        assert(!S.size() || s.size()==S[0].size());
+        const int n = static_cast<int>(s.size());
+        const int m = static_cast<int>(S.size());
+
+        assert(static_cast<int>(Y.size()) == m);
+        assert(static_cast<int>(y.size()) == n);
+        assert(!m || n==static_cast<int>(S[0].size()));
+
+        if (m==history_depth) {
+            S.pop_back();
+            Y.pop_back();
+        }
         S.push_front(s);
         Y.push_front(y);
-        if ((int)S.size()>history_depth) S.pop_back();
-        if ((int)Y.size()>history_depth) Y.pop_back();
 
+        double ys = dot(y, s);
         double yy = dot(y, y);
         assert(std::abs(yy) > 0);
-        gamma = dot(s, y)/yy;
+#if M1QN3_PRECOND
+        if (!m)
+            diag = vector(n, 1.);
+
+        double dyy = 0, dinvss = 0;
+#if defined(_OPENMP) && _OPENMP>=200805
+#pragma omp parallel for reduction(+:dinvss) reduction(+:dyy)
+#endif
+        for (int i=0; i<n; i++) {
+            dinvss += s[i]*s[i] / diag[i];
+            dyy    += y[i]*y[i] * diag[i];
+        }
+
+#pragma omp parallel for
+        for (int i=0; i<n; i++) {
+            diag[i] = 1. / (dyy/(ys*diag[i]) + y[i]*y[i]/ys - dyy*s[i]*s[i]/(ys*dinvss*diag[i]*diag[i]));
+            assert(std::isfinite(diag[i]));
+        }
+#else
+        gamma = ys/yy;
         assert(std::isfinite(gamma));
+#endif
     }
 
     // Multiply a vector g by the inverse Hessian matrix approximation
@@ -45,9 +71,11 @@ namespace STLBFGS {
     void Optimizer::IHessian::mult(const vector &g, vector &result) const {
         const int nvars = static_cast<int>(g.size());
         const int m     = static_cast<int>(S.size());
-        assert((int)Y.size() == m);
+        assert(static_cast<int>(Y.size()) == m);
 
         result = g;
+
+        if (!m) return;
 
         std::vector<double> a(m);
         for (int i=0; i<m; i++) {
@@ -66,7 +94,11 @@ namespace STLBFGS {
 
 #pragma omp parallel for
         for (int j=0; j<nvars; j++)
+#if M1QN3_PRECOND
+            result[j] *= diag[j];
+#else
             result[j] *= gamma;
+#endif
 
         for (int i=m; i--;) {
             const vector &y = Y[i];

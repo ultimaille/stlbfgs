@@ -6,21 +6,28 @@
 #include <deque>
 #include "linesearch.h"
 
+#define M1QN3_PRECOND 1
 namespace STLBFGS {
+    typedef std::vector<double> vector;
+
     struct Optimizer {
-        typedef std::function<void(const std::vector<double>& x, double &f, std::vector<double>& g)> func_grad_eval;
+        typedef std::function<void(const vector& x, double &f, vector& g)> func_grad_eval;
         struct IHessian { // L-BFGS approximates inverse Hessian matrix by storing a limited history of past updates
-            void mult(const std::vector<double> &g, std::vector<double> &result) const; // matrix-vector multiplication
-            void add_correction(const std::vector<double>&s, const std::vector<double>& y);
+            void mult(const vector &g, vector &result) const; // matrix-vector multiplication
+            void add_correction(const vector&s, const vector& y);
 
             int history_depth = 10;
-            typedef std::deque<std::vector<double>> history;
+            typedef std::deque<vector> history;
             history S = {};
             history Y = {};
-            double gamma = 1.;
+#if M1QN3_PRECOND
+            vector diag = {};
+#else
+            double gamma = 1.; // TODO remove non-preconditioned version
+#endif
         };
 
-        void run(std::vector<double>& sol); // actual optimization loop
+        void run(vector& sol); // actual optimization loop
 
         const func_grad_eval func_grad;
         IHessian invH = {};  // current inverse Hessian approximation

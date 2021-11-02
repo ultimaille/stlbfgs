@@ -25,11 +25,7 @@ TEST_CASE("Powell badly scaled function", "[L-BFGS]") {
 
     std::vector<double> x = {0, 1};
     Optimizer opt{fcn};
-    opt.ftol = 0;
-    opt.gtol = 0;
-    opt.mu  = 1e-4;
-    opt.eta = 1e-2;
-
+    opt.ftol = 1e-15;
     opt.run(x);
 
     CHECK( std::abs(x[0]-1.098e-5) < xtol );
@@ -54,9 +50,7 @@ TEST_CASE("Powell singular function", "[L-BFGS]") {
 
     std::vector<double> x = {3, -1, 0, 1};
     Optimizer opt{fcn};
-    opt.ftol = 1e-10;
-    opt.mu  = 1e-4;
-    opt.eta = 1e-1;
+    opt.ftol = 1e-12;
 
     opt.run(x);
 
