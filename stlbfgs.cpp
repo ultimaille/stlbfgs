@@ -46,9 +46,7 @@ namespace STLBFGS {
             diag = vector(n, 1.);
 
         double dyy = 0, dinvss = 0;
-#if defined(_OPENMP) && _OPENMP>=200805
 #pragma omp parallel for reduction(+:dinvss) reduction(+:dyy)
-#endif
         for (int i=0; i<n; i++) {
             dinvss += s[i]*s[i] / diag[i];
             dyy    += y[i]*y[i] * diag[i];
@@ -69,8 +67,8 @@ namespace STLBFGS {
     // Algorithm 7.4 (L-BFGS two-loop recursion)
     // Nocedal and Wright, Numerical optimization (2006)
     void Optimizer::IHessian::mult(const vector &g, vector &result) const {
-        const int nvars = static_cast<int>(g.size());
-        const int m     = static_cast<int>(S.size());
+        const int n = static_cast<int>(g.size());
+        const int m = static_cast<int>(S.size());
         assert(static_cast<int>(Y.size()) == m);
 
         result = g;
@@ -81,19 +79,19 @@ namespace STLBFGS {
         for (int i=0; i<m; i++) {
             const vector &y = Y[i];
             const vector &s = S[i];
-            assert((int)y.size() == nvars && (int)s.size() == nvars);
+            assert(static_cast<int>(y.size()) == n && static_cast<int>(s.size()) == n);
 
             double sy = dot(s, y);
             assert(std::abs(sy) > 0);
             a[i] = dot(s, result)/sy;
             assert(std::isfinite(a[i]));
 #pragma omp parallel for
-            for (int j=0; j<nvars; j++)
+            for (int j=0; j<n; j++)
                 result[j] -= a[i]*y[j];
         }
 
 #pragma omp parallel for
-        for (int j=0; j<nvars; j++)
+        for (int j=0; j<n; j++)
 #if M1QN3_PRECOND
             result[j] *= diag[j];
 #else
@@ -106,7 +104,7 @@ namespace STLBFGS {
             double b = dot(y, result)/dot(s, y);
             assert(std::isfinite(b));
 #pragma omp parallel for
-            for (int j=0; j<nvars; j++)
+            for (int j=0; j<n; j++)
                 result[j] += (a[i]-b)*s[j];
         }
     }
@@ -115,9 +113,7 @@ namespace STLBFGS {
     // Algorithm 7.5
     // Nocedal and Wright, Numerical optimization (2006)
     void Optimizer::run(vector &x) {
-        const int n = (int)x.size();
-//        assert(invH.nvars == n);
-
+        const int n = static_cast<int>(x.size());
         double f;
         vector g(n), p(n);
 
@@ -157,7 +153,8 @@ namespace STLBFGS {
 
             double alpha = i ? 1. : 1./norm(g);
             assert(std::isfinite(alpha));
-            bool res = line_search(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta);
+//            bool res = line_search_more_thuente(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta);
+            bool res = line_search_backtracking(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta);
             if (!res) {
                 if (verbose) std::cerr << "Linesearch failed, step = " << alpha << std::endl;
                 break;

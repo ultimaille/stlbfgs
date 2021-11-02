@@ -61,22 +61,22 @@ TEST_CASE("Table 1", "[Mor\\'e-Thuente]") {
     };
     double alpha = 1e-3;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-1) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-1) );
     CHECK( std::abs(alpha-1.3650)< 1e-4 );
     CHECK( nfev == 6+1 );
     alpha = 1e-1;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-1) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-1) );
     CHECK( std::abs(alpha-1.4414)< 1e-4 );
     CHECK( nfev == 3+1 );
     alpha = 1e+1;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-1) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-1) );
     CHECK( std::abs(alpha-10)< 1e-4 );
     CHECK( nfev == 1+1 );
     alpha = 1e+3;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-1) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-1) );
     CHECK( std::abs(alpha-36.8876)< 1e-4 );
     CHECK( nfev == 4+1 );
 }
@@ -91,22 +91,22 @@ TEST_CASE("Table 2", "[Mor\\'e-Thuente]") {
         return { alpha, f, g };
     };
     double alpha = 1e-3;
-    CHECK( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-1, 1e-1) );
     CHECK( std::abs(alpha-1.5960)< 1e-4 );
     CHECK( nfev == 12+1 );
     alpha = 1e-1;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-1, 1e-1) );
     CHECK( std::abs(alpha-1.5960)< 1e-4 );
     CHECK( nfev == 8+1 );
     alpha = 1e+1;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-1, 1e-1) );
     CHECK( std::abs(alpha-1.5960)< 1e-4 );
     CHECK( nfev == 8+1 );
     alpha = 1e+3;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-1, 1e-1) );
     CHECK( std::abs(alpha-1.5960)< 1e-4 );
     CHECK( nfev == 11+1 );
 }
@@ -134,22 +134,22 @@ TEST_CASE("Table 3", "[Mor\\'e-Thuente]") {
         return { alpha, f, g };
     };
     double alpha = 1e-3;
-    CHECK( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-1, 1e-1) );
     CHECK( std::abs(alpha-1.)< 1e-4 );
     CHECK( nfev == 12+1 );
     alpha = 1e-1;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-1, 1e-1) );
     CHECK( std::abs(alpha-1.)< 1e-4 );
     CHECK( nfev == 12+1 );
     alpha = 1e+1;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-1, 1e-1) );
     CHECK( std::abs(alpha-1.)< 1e-4 );
     CHECK( nfev == 10+1 );
     alpha = 1e+3;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-1, 1e-1) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-1, 1e-1) );
     CHECK( std::abs(alpha-1.)< 1e-4 );
     CHECK( nfev == 13+1 );
 }
@@ -177,25 +177,25 @@ TEST_CASE("Table 4", "[Mor\\'e-Thuente]") {
 
     double alpha = 1e-3;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-3) );
     CHECK( std::abs(alpha-0.0850)< 1e-4 );
     CHECK( nfev == 4+1 );
 
     alpha = 1e-1;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-3) );
     CHECK( std::abs(alpha-0.10)< 1e-4 );
     CHECK( nfev == 1+1 );
 
     alpha = 1e+1;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-3) );
     CHECK( std::abs(alpha-0.3491)< 1e-4 );
     CHECK( nfev == 3+1 );
 
     alpha = 1e+3;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-3) );
     CHECK( std::abs(alpha-0.8294)< 1e-4 );
     CHECK( nfev == 4+1 );
 
@@ -203,7 +203,7 @@ TEST_CASE("Table 4", "[Mor\\'e-Thuente]") {
 
     alpha = 1.;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 0.1, 0.9) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 0.1, 0.9) );
     CHECK( std::abs(alpha-0.0039)< 1e-4 );
     CHECK( nfev == 6+1 );
 }
@@ -218,25 +218,25 @@ TEST_CASE("Table 5", "[Mor\\'e-Thuente]") {
     };
     double alpha = 1e-3;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-3) );
     CHECK( std::abs(alpha-0.0750)< 1e-4 );
     CHECK( nfev == 6+1 );
 
     alpha = 1e-1;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-3) );
     CHECK( std::abs(alpha-0.0775)< 1e-4 );
     CHECK( nfev == 3+1 );
 
     alpha = 1e+1;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-3) );
     CHECK( std::abs(alpha-0.0731)< 1e-4 );
     CHECK( nfev == 7+1 );
 
     alpha = 1e+3;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-3) );
     CHECK( std::abs(alpha-0.0762)< 1e-4 );
     CHECK( nfev == 8+1 );
 
@@ -244,7 +244,7 @@ TEST_CASE("Table 5", "[Mor\\'e-Thuente]") {
 
     alpha = 1.;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 0.1, 0.9) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 0.1, 0.9) );
     CHECK( std::abs(alpha-0.0434)< 1e-4 );
     CHECK( nfev == 4+1 );
 }
@@ -259,25 +259,25 @@ TEST_CASE("Table 6", "[Mor\\'e-Thuente]") {
     };
     double alpha = 1e-3;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-3) );
     CHECK( std::abs(alpha-0.9279)< 1e-4 );
     CHECK( nfev == 13+1 );
 
     alpha = 1e-1;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-3) );
     CHECK( std::abs(alpha-0.9262)< 1e-4 );
     CHECK( nfev == 11+1 );
 
     alpha = 1e+1;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-3) );
     CHECK( std::abs(alpha-0.9248)< 1e-4 );
     CHECK( nfev == 8+1 );
 
     alpha = 1e+3;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 1e-3, 1e-3) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 1e-3, 1e-3) );
 
 // low safeguarding affects this
 #if 0
@@ -291,7 +291,7 @@ TEST_CASE("Table 6", "[Mor\\'e-Thuente]") {
 
     alpha = 1.;
     nfev = 0;
-    CHECK( line_search(func, func(0), alpha, 0.1, 0.9) );
+    CHECK( line_search_more_thuente(func, func(0), alpha, 0.1, 0.9) );
     CHECK( std::abs(alpha-0.0040)< 1e-4 );
     CHECK( nfev == 6+1 );
 }

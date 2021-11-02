@@ -81,7 +81,7 @@ namespace STLBFGS {
         return std::make_tuple(res, 4);
     }
 
-    bool line_search(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta, const double xtol, const int lsmaxfev) {
+    bool line_search_more_thuente(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta, const int lsmaxfev) {
         bool stage1 = true;  // use function psi instead if phi
         bool bracketed = false;
         Sample phil = phi0;
@@ -93,12 +93,9 @@ namespace STLBFGS {
                 phiu.a = at + 4.*(at - phil.a);
             Sample phit = phi(at);
 
-            // TODO stpmin/stpmax
             // TODO error handling
             if (sufficient_decrease(phi0, phit, mu) && curvature_condition(phi0, phit, eta))
                 return true;
-            if (bracketed && std::abs(phiu.a - phil.a) < std::max(phiu.a, phil.a)*xtol)
-                return false;
 
             auto psi = [phi0, mu](const Sample &phia) {
                 return Sample{ phia.a, phia.f - phi0.f - mu*phi0.d*phia.a, phia.d - mu*phi0.d };
@@ -149,6 +146,48 @@ namespace STLBFGS {
                 std::min(phil.a, std::max(phiu.a, at));
         }
         return false;
+    }
+
+    bool line_search_backtracking(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta, const int lsmaxfev) {
+        Sample phil = phi0;
+        Sample phiu = { 0, 0, 0 };
+
+        int nfev = 0;
+        for (; nfev<lsmaxfev; nfev++) { // bracketing phase
+            phiu = phi(at);
+            if (!sufficient_decrease(phi0, phiu, mu) || (nfev && phiu.f>=phil.f))
+                break;
+
+            if (curvature_condition(phi0, phiu, eta))
+                return true;
+
+            if (phiu.d>=0) {
+                std::swap(phil, phiu);
+                break;
+            }
+
+            at += 2.*(at - phil.a);
+            phil = phiu;
+        }
+
+        if (nfev==lsmaxfev) // bracketing failed
+            return false;
+
+        for (; nfev<lsmaxfev; nfev++) { // zoom phase (bracketing succeeded)
+            assert(phil.d * (phiu.a - phil.a) < 0); // TODO Inf compliant
+            at = (phil.a+phiu.a)/2.;
+            Sample phit = phi(at);
+            if (!sufficient_decrease(phi0, phit, mu) || phit.f>=phil.f) {
+                phiu = phit;
+            } else {
+                if (curvature_condition(phi0, phit, eta))
+                    return true;
+                if (phit.d * (phiu.a - phil.a)>=0) // TODO Inf compliant
+                    phiu = phil;
+                phil = phit;
+            }
+        }
+        return false; // zoom failed
     }
 }
 
