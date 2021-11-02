@@ -148,24 +148,22 @@ namespace STLBFGS {
         return false;
     }
 
+    // a version of line search by Nocedal and Wright, Numerical optimization (2006)
     bool line_search_backtracking(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta, const int lsmaxfev) {
         Sample phil = phi0;
         Sample phiu = { 0, 0, 0 };
 
         int nfev = 0;
-        for (; nfev<lsmaxfev; nfev++) { // bracketing phase
+        for (; nfev<lsmaxfev; nfev++) { // bracketing phase, see Numerical optimization, Algorithm 3.5 (Line Search Algorithm)
             phiu = phi(at);
             if (!sufficient_decrease(phi0, phiu, mu) || (nfev && phiu.f>=phil.f))
                 break;
-
             if (curvature_condition(phi0, phiu, eta))
                 return true;
-
             if (phiu.d>=0) {
                 std::swap(phil, phiu);
                 break;
             }
-
             at += 2.*(at - phil.a);
             phil = phiu;
         }
@@ -173,8 +171,8 @@ namespace STLBFGS {
         if (nfev==lsmaxfev) // bracketing failed
             return false;
 
-        for (; nfev<lsmaxfev; nfev++) { // zoom phase (bracketing succeeded)
-            assert(phil.d * (phiu.a - phil.a) < 0); // TODO Inf compliant
+        for (; nfev<lsmaxfev; nfev++) { // zoom phase (bracketing succeeded), see Numerical optimization, Algorithm 3.6 (Zoom)
+            assert((phil.d>=0 && phiu.a<phil.a) || (phil.d<=0 && phiu.a>phil.a));
             at = (phil.a+phiu.a)/2.;
             Sample phit = phi(at);
             if (!sufficient_decrease(phi0, phit, mu) || phit.f>=phil.f) {
@@ -182,7 +180,7 @@ namespace STLBFGS {
             } else {
                 if (curvature_condition(phi0, phit, eta))
                     return true;
-                if (phit.d * (phiu.a - phil.a)>=0) // TODO Inf compliant
+                if ((phit.d>=0 && phiu.a>phil.a) || (phit.d<=0 && phiu.a<phil.a))
                     phiu = phil;
                 phil = phit;
             }
