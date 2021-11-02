@@ -151,11 +151,12 @@ namespace STLBFGS {
                 return { alpha, f, -dot(g, p) };
             };
 
-            double alpha = i ? 1. : 1./norm(g);
+            double alpha = i ? 1. : 1./norm(g); // TODO move restoration of alpha here from linesearch routine
             assert(std::isfinite(alpha));
+            Sample f0 = {0, f, -dot(g, p)}; // N.B. (unsucessfull) call to line_search_more_thuente() modifies g, so save it for subsequent call to line_search_backtracking()
             if (
-                    !line_search_more_thuente(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta) &&
-                    !line_search_backtracking(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta)
+                    !line_search_more_thuente(ls_func, f0, alpha, mu, eta) &&
+                    !line_search_backtracking(ls_func, f0, alpha, mu, eta)
                ) {
                 if (verbose) std::cerr << "Line search failed" << std::endl;
                 break;
