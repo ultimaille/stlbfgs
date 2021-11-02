@@ -178,12 +178,15 @@ namespace STLBFGS {
                ) break;
             at = (phil.a+phiu.a)/2.;
             Sample phit = phi(at);
-            if (!sufficient_decrease(phi0, phit, mu) || phit.f>=phil.f) {
+            if (!sufficient_decrease(phi0, phit, mu) || phit.f>=phil.f)
                 phiu = phit;
-            } else {
+            else {
                 if (curvature_condition(phi0, phit, eta))
                     return true;
-                if ((phit.d>=0 && phiu.a>phil.a) || (phit.d<=0 && phiu.a<phil.a))
+                if (
+                        (phit.d>=0 && phiu.a>phil.a) ||
+                        (phit.d<=0 && phiu.a<phil.a)
+                   )
                     phiu = phil;
                 phil = phit;
             }
