@@ -3,8 +3,6 @@
 #include <cmath>
 #include <algorithm>
 #include <limits>
-#undef NDEBUG
-#include <cassert>
 
 #include "linesearch.h"
 
@@ -43,15 +41,6 @@ namespace STLBFGS {
     }
 
     std::tuple<double,int> trial_value(const Sample &l, const Sample &t, const Sample &u, const bool bracketed) {
-//       std::cerr << "a: " << l.a << " " << t.a << std::endl;
-//       std::cerr << "f: " << l.f << " " << t.f << std::endl;
-//       std::cerr << "d: " << l.d << " " << t.d << std::endl;
-
-        assert(
-                (l.a<u.a && l.a<t.a && t.a<u.a && l.d<0) ||
-                (l.a>u.a && l.a>t.a && t.a>u.a && l.d>0)
-              );
-
         double ac = find_cubic_minimizer(l.a, l.f, l.d, t.a, t.f, t.d);
         if (t.f > l.f) { // Case 1: a higher function value. The minimum is bracketed.
             double aq = find_quadratic_minimizer(l.a, l.f, l.d, t.a, t.f);
@@ -82,6 +71,7 @@ namespace STLBFGS {
     }
 
     bool line_search_more_thuente(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta, const int lsmaxfev) {
+        double init_step = at;
         bool stage1 = true;  // use function psi instead if phi
         bool bracketed = false;
         Sample phil = phi0;
@@ -93,9 +83,19 @@ namespace STLBFGS {
                 phiu.a = at + 4.*(at - phil.a);
             Sample phit = phi(at);
 
-            // TODO error handling
             if (sufficient_decrease(phi0, phit, mu) && curvature_condition(phi0, phit, eta))
                 return true;
+
+            // TODO error handling
+            if (
+                    !std::isfinite(phil.a) || !std::isfinite(phil.f) || !std::isfinite(phil.d) ||
+                    !std::isfinite(phit.a) || !std::isfinite(phit.f) || !std::isfinite(phit.d) ||
+                    !std::isfinite(phiu.a) || !std::isfinite(phiu.f) || !std::isfinite(phiu.d) ||
+                    (
+                     (phil.a>=phiu.a || phil.a>=phit.a || phit.a>=phiu.a || phil.d>=0) &&
+                     (phil.a<=phiu.a || phil.a<=phit.a || phit.a<=phiu.a || phil.d<=0)
+                    )
+               ) break;
 
             auto psi = [phi0, mu](const Sample &phia) {
                 return Sample{ phia.a, phia.f - phi0.f - mu*phi0.d*phia.a, phia.d - mu*phi0.d };
@@ -121,7 +121,6 @@ namespace STLBFGS {
                 phil = phit;
             } else
                 phil = phit;
-//          std::cerr << "caseno: " << caseno << std::endl;
 
             if (bracketed) {
                 if (caseno==1 || caseno==3) {
@@ -145,17 +144,21 @@ namespace STLBFGS {
                 std::max(phil.a, std::min(phiu.a, at)) :
                 std::min(phil.a, std::max(phiu.a, at));
         }
+
+        at = init_step;
         return false;
     }
 
     // a version of line search by Nocedal and Wright, Numerical optimization (2006)
     bool line_search_backtracking(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta, const int lsmaxfev) {
+        double init_step = at;
         Sample phil = phi0;
         Sample phiu = { 0, 0, 0 };
 
         int nfev = 0;
         for (; nfev<lsmaxfev; nfev++) { // bracketing phase, see Numerical optimization, Algorithm 3.5 (Line Search Algorithm)
             phiu = phi(at);
+            // TODO error handling
             if (!sufficient_decrease(phi0, phiu, mu) || (nfev && phiu.f>=phil.f))
                 break;
             if (curvature_condition(phi0, phiu, eta))
@@ -168,11 +171,11 @@ namespace STLBFGS {
             phil = phiu;
         }
 
-        if (nfev==lsmaxfev) // bracketing failed
-            return false;
-
         for (; nfev<lsmaxfev; nfev++) { // zoom phase (bracketing succeeded), see Numerical optimization, Algorithm 3.6 (Zoom)
-            assert((phil.d>=0 && phiu.a<phil.a) || (phil.d<=0 && phiu.a>phil.a));
+            if (
+                    (phil.d<0 || phiu.a>=phil.a) &&
+                    (phil.d>0 || phiu.a<=phil.a)
+               ) break;
             at = (phil.a+phiu.a)/2.;
             Sample phit = phi(at);
             if (!sufficient_decrease(phi0, phit, mu) || phit.f>=phil.f) {
@@ -185,6 +188,8 @@ namespace STLBFGS {
                 phil = phit;
             }
         }
+
+        at = init_step;
         return false; // zoom failed
     }
 }

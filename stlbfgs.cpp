@@ -153,10 +153,11 @@ namespace STLBFGS {
 
             double alpha = i ? 1. : 1./norm(g);
             assert(std::isfinite(alpha));
-//            bool res = line_search_more_thuente(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta);
-            bool res = line_search_backtracking(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta);
-            if (!res) {
-                if (verbose) std::cerr << "Linesearch failed, step = " << alpha << std::endl;
+            if (
+                    !line_search_more_thuente(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta) &&
+                    !line_search_backtracking(ls_func, {0, f, -dot(g, p)}, alpha, mu, eta)
+               ) {
+                if (verbose) std::cerr << "Line search failed" << std::endl;
                 break;
             }
 
@@ -177,6 +178,5 @@ namespace STLBFGS {
                 if (verbose) std::cerr << "reached maxiter" << std::endl;
         }
     }
-
 }
 
