@@ -112,7 +112,7 @@ namespace STLBFGS {
     // Run an L-BFGS optimization
     // Algorithm 7.5
     // Nocedal and Wright, Numerical optimization (2006)
-    void Optimizer::run(vector &x) {
+    bool Optimizer::run(vector &x) {
         const int n = static_cast<int>(x.size());
         double f;
         vector g(n), p(n);
@@ -121,7 +121,7 @@ namespace STLBFGS {
         for (int i=0; i<maxiter; i++) {
             if (norm(g)/std::max(1., norm(x))<=gtol) {
                 if (verbose) std::cerr << "||g||/max(1,||x||) <= " << gtol << std::endl;
-                break;
+                return true;
             }
 
             double gmax_ = 0.;
@@ -132,7 +132,7 @@ namespace STLBFGS {
                 gmax_ = std::max(gmax_, std::abs(gi));
             if (gmax_ <= gmax) {
                 if (verbose) std::cerr << "max{|g_i|, i = 1, ..., n} <= " <<  gmax << std::endl;
-                break;
+                return true;
             }
 
             invH.mult(g, p);
@@ -159,7 +159,7 @@ namespace STLBFGS {
                     !line_search_backtracking(ls_func, f0, alpha, mu, eta)
                ) {
                 if (verbose) std::cerr << "Line search failed" << std::endl;
-                break;
+                return false;
             }
 
             vector s(n), y(n);
@@ -172,12 +172,13 @@ namespace STLBFGS {
 
             if ((fprev-f)/std::max(std::max(std::abs(fprev), std::abs(f)), 1.) <= ftol) {
                 if (verbose) std::cerr << "(f^k - f^{k+1})/max{|f^k|,|f^{k+1}|,1} <= " << ftol << std::endl;
-                break;
+                return true;
             }
 
             if (i==maxiter-1)
                 if (verbose) std::cerr << "reached maxiter" << std::endl;
         }
+        return false;
     }
 }
 

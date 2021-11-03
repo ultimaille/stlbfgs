@@ -27,7 +27,7 @@ namespace STLBFGS {
 #endif
         };
 
-        void run(vector& sol); // actual optimization loop
+        bool run(vector& sol); // actual optimization loop
 
         const func_grad_eval func_grad;
         IHessian invH = {};  // current inverse Hessian approximation
