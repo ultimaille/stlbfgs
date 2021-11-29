@@ -128,8 +128,8 @@ namespace STLBFGS {
 #if defined(_OPENMP) && _OPENMP>=200805
 #pragma omp parallel for reduction(max:gmax_)
 #endif
-            for (double gi : g)
-                gmax_ = std::max(gmax_, std::abs(gi));
+            for (int i=0; i<n; i++)
+                gmax_ = std::max(gmax_, std::abs(g[i]));
             if (gmax_ <= gmax) {
                 if (verbose) std::cerr << "max{|g_i|, i = 1, ..., n} <= " <<  gmax << std::endl;
                 return true;
