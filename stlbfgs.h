@@ -9,28 +9,27 @@
 #define M1QN3_PRECOND 1
 namespace STLBFGS {
     typedef std::vector<double> vector;
+    typedef std::function<void(const vector &x, double &f, vector &g)> func_grad_eval;
+    typedef std::deque<vector> history;
 
     struct Optimizer {
-        typedef std::function<void(const vector& x, double &f, vector& g)> func_grad_eval;
+        Optimizer(func_grad_eval func_grad) : func_grad(func_grad) {}
+        bool run(vector &sol); // actual optimization loop
+
         struct IHessian { // L-BFGS approximates inverse Hessian matrix by storing a limited history of past updates
             void mult(const vector &g, vector &result) const; // matrix-vector multiplication
-            void add_correction(const vector&s, const vector& y);
+            void add_correction(const vector &s, const vector &y);
 
-            int history_depth = 10;
-            typedef std::deque<vector> history;
+            const int history_depth;
+            const bool m1qn3_precond;
+
             history S = {};
             history Y = {};
-#if M1QN3_PRECOND
-            vector diag = {};
-#else
-            double gamma = 1.; // TODO remove non-preconditioned version
-#endif
-        };
-
-        bool run(vector& sol); // actual optimization loop
+            vector diag = {};  // used if m1qn3_precond is set to true
+            double gamma = 1.; // used otherwise
+        } invH = { 10, true };
 
         const func_grad_eval func_grad;
-        IHessian invH = {};  // current inverse Hessian approximation
 
         // L-BFGS user parameters
         int maxiter = 10000; // maximum number of quasi-Newton updates

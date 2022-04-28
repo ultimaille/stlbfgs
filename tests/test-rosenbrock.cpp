@@ -9,7 +9,7 @@ static const double xtol = 1e-3;
 TEST_CASE("Rosenbrock function", "[L-BFGS]") {
     std::vector<double> sol = {-1.2, 1.0};
 
-    const Optimizer::func_grad_eval rosenbrock = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
+    const func_grad_eval rosenbrock = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
         f = (1. - x[0])*(1. - x[0]) + 100.*(x[1] - x[0]*x[0])*(x[1] - x[0]*x[0]);
         g[0] = 2.*(200.*x[0]*x[0]*x[0] - 200.*x[0]*x[1] + x[0] - 1.);
         g[1] = 200.*(x[1] - x[0]*x[0]);

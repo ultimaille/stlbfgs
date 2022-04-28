@@ -8,7 +8,7 @@ using namespace STLBFGS;
 static const double xtol = 1e-5;
 
 TEST_CASE("Brown's badly scaled function", "[L-BFGS]") {
-    const Optimizer::func_grad_eval fcn = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
+    const func_grad_eval fcn = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
         double f1 = x[0] - 1e6;
         double f2 = x[1] - 2e-6;
         double f3 = static_cast<double>(x[0]*x[1]) - 2; // Prevent fused multiply subtract.

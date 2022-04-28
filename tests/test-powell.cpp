@@ -9,7 +9,7 @@ using namespace STLBFGS;
 static const double xtol = 1e-3;
 
 TEST_CASE("Powell badly scaled function", "[L-BFGS]") {
-    const Optimizer::func_grad_eval fcn = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
+    const func_grad_eval fcn = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
         double f0 = pow(10, 4)*x[0]*x[1]-1;
         double f1 = exp(-x[0])+exp(-x[1])-1.0001;
         f = f0*f0+f1*f1;
@@ -34,7 +34,7 @@ TEST_CASE("Powell badly scaled function", "[L-BFGS]") {
 
 
 TEST_CASE("Powell singular function", "[L-BFGS]") {
-    const Optimizer::func_grad_eval fcn = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
+    const func_grad_eval fcn = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
         double f0 = x[0]+10*x[1];
         double f1 = pow(5, 0.5)*(x[2]-x[3]);
         double f2 = pow(x[1]-2*x[2], 2);

@@ -99,7 +99,7 @@ TEST_CASE("Quad mesh untangling", "[L-BFGS]") {
         double eps = std::sqrt(pow(1e-6, 2) + .04*pow(std::min(mindet, 0.), 2)); // the regularization parameter e
 
         // compute the energy and its gradient
-        const STLBFGS::Optimizer::func_grad_eval energy = [&](const std::vector<double>& x, double& f, std::vector<double>& g) {
+        const STLBFGS::func_grad_eval energy = [&](const std::vector<double>& x, double& f, std::vector<double>& g) {
             f = 0;
             g = std::vector<double>(nvars, 0);
 

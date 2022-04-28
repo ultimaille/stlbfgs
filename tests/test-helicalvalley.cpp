@@ -9,7 +9,7 @@ using namespace STLBFGS;
 static const double xtol = 1e-3;
 
 TEST_CASE("Helical valley function", "[L-BFGS]") {
-    const Optimizer::func_grad_eval fcn = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
+    const func_grad_eval fcn = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
         const auto phi = [](double x0, double x1) {
             double l = 1/(2*M_PI)*atan(x1/x0);
             if (x0>0) return l;

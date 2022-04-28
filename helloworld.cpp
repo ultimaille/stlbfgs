@@ -2,7 +2,7 @@
 #include "stlbfgs.h"
 
 int main() {
-    const STLBFGS::Optimizer::func_grad_eval func = [](const std::vector<double> &x, double &f, std::vector<double> &g) {
+    const STLBFGS::func_grad_eval func = [](const std::vector<double> &x, double &f, std::vector<double> &g) {
         f = (x[0] - 7)*(x[0] - 7) +
             (x[1] - 1)*(x[1] - 1);
         g[0] = 2*(x[0] - 7);

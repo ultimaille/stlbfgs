@@ -8,7 +8,7 @@ using namespace STLBFGS;
 static const double xtol = 1e-3;
 
 TEST_CASE("Wood function", "[L-BFGS]") {
-    const Optimizer::func_grad_eval fcn = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
+    const func_grad_eval fcn = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
         double f0 = 10*(x[1]-pow(x[0], 2));
         double f1 = 1-x[0];
         double f2 = std::sqrt(90)*(x[3]-pow(x[2], 2));

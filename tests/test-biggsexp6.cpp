@@ -8,7 +8,7 @@ using namespace STLBFGS;
 static const double xtol = 1e-5;
 
 TEST_CASE("Biggs EXP6 function", "[L-BFGS]") {
-    const Optimizer::func_grad_eval fcn = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
+    const func_grad_eval fcn = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
         f = 0;
         g = {0, 0, 0, 0, 0, 0};
 

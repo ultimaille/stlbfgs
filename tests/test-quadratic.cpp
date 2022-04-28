@@ -9,7 +9,7 @@ static const double xtol = 1e-3;
 TEST_CASE("2d quadratic", "[L-BFGS]") {
     std::vector<double> sol = {10, 10};
 
-    const Optimizer::func_grad_eval func = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
+    const func_grad_eval func = [](const std::vector<double>& x, double& f, std::vector<double>& g) {
         f = (x[0] - 7)*(x[0] - 7) +
             (x[1] - 1)*(x[1] - 1);
         g[0] = 2*(x[0] - 7);

@@ -41,26 +41,26 @@ namespace STLBFGS {
         double ys = dot(y, s);
         double yy = dot(y, y);
         assert(std::abs(yy) > 0);
-#if M1QN3_PRECOND
-        if (!m)
-            diag = vector(n, 1.);
 
-        double dyy = 0, dinvss = 0;
+        if (!m1qn3_precond) {
+            gamma = ys/yy;
+            assert(std::isfinite(gamma));
+        } else {
+            if (!m) diag = vector(n, 1.);
+
+            double dyy = 0, dinvss = 0;
 #pragma omp parallel for reduction(+:dinvss) reduction(+:dyy)
-        for (int i=0; i<n; i++) {
-            dinvss += s[i]*s[i] / diag[i];
-            dyy    += y[i]*y[i] * diag[i];
-        }
+            for (int i=0; i<n; i++) {
+                dinvss += s[i]*s[i] / diag[i];
+                dyy    += y[i]*y[i] * diag[i];
+            }
 
 #pragma omp parallel for
-        for (int i=0; i<n; i++) {
-            diag[i] = 1. / (dyy/(ys*diag[i]) + y[i]*y[i]/ys - dyy*s[i]*s[i]/(ys*dinvss*diag[i]*diag[i]));
-            assert(std::isfinite(diag[i]));
+            for (int i=0; i<n; i++) {
+                diag[i] = 1. / (dyy/(ys*diag[i]) + y[i]*y[i]/ys - dyy*s[i]*s[i]/(ys*dinvss*diag[i]*diag[i]));
+                assert(std::isfinite(diag[i]));
+            }
         }
-#else
-        gamma = ys/yy;
-        assert(std::isfinite(gamma));
-#endif
     }
 
     // Multiply a vector g by the inverse Hessian matrix approximation
@@ -92,11 +92,7 @@ namespace STLBFGS {
 
 #pragma omp parallel for
         for (int j=0; j<n; j++)
-#if M1QN3_PRECOND
-            result[j] *= diag[j];
-#else
-            result[j] *= gamma;
-#endif
+            result[j] *= m1qn3_precond ? diag[j] : gamma;
 
         for (int i=m; i--;) {
             const vector &y = Y[i];
