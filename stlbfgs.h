@@ -6,7 +6,6 @@
 #include <deque>
 #include "linesearch.h"
 
-#define M1QN3_PRECOND 1
 namespace STLBFGS {
     typedef std::vector<double> vector;
     typedef std::function<void(const vector &x, double &f, vector &g)> func_grad_eval;
