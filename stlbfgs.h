@@ -12,7 +12,8 @@ namespace STLBFGS {
     typedef std::deque<vector> history;
 
     struct Optimizer {
-        Optimizer(func_grad_eval func_grad) : func_grad(func_grad) {}
+        // Optimizer(func_grad_eval func_grad) : func_grad(func_grad) {}
+        Optimizer(func_grad_eval func_grad, ligen::csr<size_t> graph_view) : func_grad(func_grad),  ligen::csr<size_t>(graph_view) {}
         bool run(vector &sol); // actual optimization loop
 
         struct IHessian { // L-BFGS approximates inverse Hessian matrix by storing a limited history of past updates

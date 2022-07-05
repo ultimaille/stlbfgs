@@ -143,6 +143,10 @@ namespace STLBFGS {
 #pragma omp parallel for
                 for (int j=0; j<n; j++)
                     x[j] = xprev[j]-p[j]*alpha;
+                // here we have to define the new values for contributions, calculated with the new coordinates set
+                // here we use our internal copy of the graph view. We have to modify atom coordinates before using 
+                // the graph
+                // ...
                 func_grad(x, f, g);
                 return { alpha, f, -dot(g, p) };
             };
