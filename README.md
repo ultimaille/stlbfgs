@@ -44,6 +44,17 @@ cd tests &&
 ctest
 ```
 
+# Adaptation to LIGEN
+
+We are going to use this library to calculate the minumum for the Potential Energy Function of a molecule. Such function is N dimensional, with N = NUM_ATOMS * 3 and is the sum of four contributions all depending on coordinates of bonded atoms.
+
+The minimum corrensponds to the positions of the N atoms, position at which has the smaller value. Thus it is a point in a NUM_ATOMS * 3 dimensional space.
+
+We are going to modify `STLBFGS::Optimizer::run` method so it can consider coordinates from two points in space (the two atoms) while calculating the minimum value.
+
+We will use our representation of molecule on a graph to do so.
+
+
 # References
 
 **[1]** J. Nocedal (1980). Updating quasi-Newton matrices with limited storage. Mathematics of Computation, 35/151, 773-782. 3
