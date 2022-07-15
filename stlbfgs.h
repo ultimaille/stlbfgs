@@ -5,18 +5,24 @@
 #include <vector>
 #include <deque>
 #include "linesearch.h"
+#include <ligen/csrgraph_boost.hpp>
 
-namespace STLBFGS {
+namespace STLBFGS
+{
     typedef std::vector<double> vector;
-    typedef std::function<void(const vector &x, double &f, vector &g)> func_grad_eval;
+
+    // typedef std::function<void(const vector &x, double &f, vector &g)> func_grad_eval;
+    typedef std::function<void(const ligen::csr<size_t>, double &f, vector &g)> func_grad_eval;
     typedef std::deque<vector> history;
 
-    struct Optimizer {
+    struct Optimizer
+    {
         // Optimizer(func_grad_eval func_grad) : func_grad(func_grad) {}
-        Optimizer(func_grad_eval func_grad, ligen::csr<size_t> graph_view) : func_grad(func_grad),  ligen::csr<size_t>(graph_view) {}
+        Optimizer(func_grad_eval func_grad, ligen::csr<size_t> graph_view) : func_grad(func_grad), ligen::csr<size_t>(graph_view) {}
         bool run(vector &sol); // actual optimization loop
 
-        struct IHessian { // L-BFGS approximates inverse Hessian matrix by storing a limited history of past updates
+        struct IHessian
+        {                                                     // L-BFGS approximates inverse Hessian matrix by storing a limited history of past updates
             void mult(const vector &g, vector &result) const; // matrix-vector multiplication
             void add_correction(const vector &s, const vector &y);
 
@@ -27,7 +33,7 @@ namespace STLBFGS {
             history Y = {};
             vector diag = {};  // used if m1qn3_precond is set to true
             double gamma = 1.; // used otherwise
-        } invH = { 10, true };
+        } invH = {10, true};
 
         const func_grad_eval func_grad;
 
@@ -38,13 +44,12 @@ namespace STLBFGS {
         double gmax = 1e-14; // the iteration stops when max{|g_i|, i = 1, ..., n} <= gmax
 
         // Line search user parameters: the step size must satisfy Wolfe conditions with these parameters
-        double mu  = 1e-4; // sufficient decrease constant (Armijo rule)
+        double mu = 1e-4;  // sufficient decrease constant (Armijo rule)
         double eta = 9e-1; // curvature condition constant
-//      int lsmaxfev = 16;  // TODO move all line search parameters here
+                           //      int lsmaxfev = 16;  // TODO move all line search parameters here
 
         bool verbose = true;
     };
 }
 
 #endif //__STLBFGS_H__
-
