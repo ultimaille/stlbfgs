@@ -5,20 +5,17 @@
 #include <vector>
 #include <deque>
 #include "linesearch.h"
-#include <ligen/csrgraph_boost.hpp>
 
 namespace STLBFGS
 {
     typedef std::vector<double> vector;
 
-    // typedef std::function<void(const vector &x, double &f, vector &g)> func_grad_eval;
-    typedef std::function<void(const ligen::csr<size_t>, double &f, vector &g)> func_grad_eval;
+    typedef std::function<void(const vector &x, double &f, vector &g)> func_grad_eval;
     typedef std::deque<vector> history;
 
     struct Optimizer
     {
-        // Optimizer(func_grad_eval func_grad) : func_grad(func_grad) {}
-        Optimizer(func_grad_eval func_grad, ligen::csr<size_t> graph_view) : func_grad(func_grad), ligen::csr<size_t>(graph_view) {}
+        Optimizer(func_grad_eval func_grad) : func_grad(func_grad) {}
         bool run(vector &sol); // actual optimization loop
 
         struct IHessian
