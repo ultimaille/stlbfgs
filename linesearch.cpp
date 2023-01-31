@@ -7,11 +7,11 @@
 #include "linesearch.h"
 
 namespace STLBFGS {
-    bool sufficient_decrease(Sample phi0, Sample phia, double mu) {
+    bool sufficient_decrease(const Sample &phi0, const Sample &phia, double mu) {
         return phia.f <= phi0.f + mu*phia.a*phi0.d;
     }
 
-    bool curvature_condition(Sample phi0, Sample phia, double eta) {
+    bool curvature_condition(const Sample &phi0, const Sample &phia, double eta) {
         return std::abs(phia.d) <= eta*std::abs(phi0.d);
     }
 
@@ -70,7 +70,7 @@ namespace STLBFGS {
         return std::make_tuple(res, 4);
     }
 
-    bool line_search_more_thuente(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta, const int lsmaxfev) {
+    bool line_search_more_thuente(const linesearch_function phi, const Sample &phi0, double &at, const double mu, const double eta, const int lsmaxfev) {
         double init_step = at;
         bool stage1 = true;  // use function psi instead if phi
         bool bracketed = false;
@@ -150,7 +150,7 @@ namespace STLBFGS {
     }
 
     // a version of line search by Nocedal and Wright, Numerical optimization (2006)
-    bool line_search_backtracking(const linesearch_function phi, const Sample phi0, double &at, const double mu, const double eta, const int lsmaxfev) {
+    bool line_search_backtracking(const linesearch_function phi, const Sample &phi0, double &at, const double mu, const double eta, const int lsmaxfev) {
         double init_step = at;
         Sample phil = phi0;
         Sample phiu = { 0, 0, 0 };
