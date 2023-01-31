@@ -12,9 +12,10 @@ namespace STLBFGS {
     typedef std::deque<vector> history;
 
     struct Optimizer {
-        Optimizer(func_grad_eval func_grad) : func_grad(func_grad) {}
+        Optimizer(func_grad_eval func_grad, int history_depth = 10, bool m1qn3_precond = true) : func_grad{func_grad}, invH{history_depth, m1qn3_precond} {}
         bool run(vector &sol); // actual optimization loop
 
+        const func_grad_eval func_grad;
         struct IHessian { // L-BFGS approximates inverse Hessian matrix by storing a limited history of past updates
             void mult(const vector &g, vector &result) const; // matrix-vector multiplication
             void add_correction(const vector &s, const vector &y);
@@ -26,9 +27,7 @@ namespace STLBFGS {
             history Y = {};
             vector diag = {};  // used if m1qn3_precond is set to true
             double gamma = 1.; // used otherwise
-        } invH = { 10, true };
-
-        const func_grad_eval func_grad;
+        } invH;
 
         // L-BFGS user parameters
         int maxiter = 10000; // maximum number of quasi-Newton updates

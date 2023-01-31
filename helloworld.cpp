@@ -9,7 +9,7 @@ int main() {
         g[1] = 2*(x[1] - 1);
     };
 
-    STLBFGS::Optimizer opt{func};
+    STLBFGS::Optimizer opt(func);
     std::vector<double> x = {10, 10};
     opt.run(x);
 
