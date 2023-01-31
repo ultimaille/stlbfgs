@@ -1,6 +1,4 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
-include(CTest)
-enable_testing()
 
 Include(FetchContent)
 FetchContent_Declare(
@@ -14,10 +12,8 @@ FILE(GLOB SRCTEST *.cpp)
 
 add_executable(stlbfgs-test-all ${SRCTEST})
 
-target_link_libraries(stlbfgs-test-all PRIVATE ${CMAKE_DL_LIBS} stlbfgs Catch2::Catch2)
+target_link_libraries(stlbfgs-test-all PRIVATE ${CMAKE_DL_LIBS} stlbfgs Catch2::Catch2WithMain)
 
-FetchContent_GetProperties(Catch2)
-list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/contrib)
 include(Catch)
-
 catch_discover_tests(stlbfgs-test-all)
+

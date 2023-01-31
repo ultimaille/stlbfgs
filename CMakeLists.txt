@@ -28,8 +28,7 @@ else()
     add_compile_options(-Wall -Wextra -pedantic)
 endif()
 
-file(GLOB SOURCES *.cpp *.h)
-add_library(stlbfgs ${SOURCES})
+add_library(stlbfgs linesearch.h stlbfgs.h linesearch.cpp stlbfgs.cpp)
 
 if(OpenMP_CXX_FOUND)
     target_link_libraries(stlbfgs OpenMP::OpenMP_CXX)
@@ -38,12 +37,14 @@ set_target_properties(stlbfgs PROPERTIES SOVERSION 1.0)
 
 option(STLBFGS_UNIT_TESTS "STLBFGS_UNIT_TESTS" OFF)
 if (STLBFGS_UNIT_TESTS)
+    include(CTest)
+    enable_testing()
     add_subdirectory(tests)
 endif()
 
 add_executable(stlbfgs-helloworld helloworld.cpp)
 target_link_libraries(stlbfgs-helloworld ${CMAKE_DL_LIBS} stlbfgs)
-IF (NOT WIN32)
+if (NOT WIN32)
   target_link_libraries(stlbfgs-helloworld m)
-ENDIF()
+endif()
 
