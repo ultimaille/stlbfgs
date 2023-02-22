@@ -1,19 +1,21 @@
-name: Build
+name: Continuous
 
 on: [push]
 
 jobs:
-  Continuous:
-    name: ${{ matrix.name }} (${{ matrix.config }})
-    # The CMake configure and build commands are platform agnostic and should work equally
-    # well on Windows or Mac.  You can convert this to a matrix build if you need
-    # cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on:  ${{ matrix.os }}
+
+  linux-mac:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        config: [Release, Debug, RelWithDebInfo]
+        cfg: [{os: ubuntu-latest, cxx: g++-12},
+              {os: ubuntu-latest, cxx: g++-9},
+              {os: macos-latest, cxx: clang++}]
+        config: [Release, Debug]
+
+    runs-on:  ${{ matrix.cfg.os }}
+
+    env:
+      CXX: ${{ matrix.cfg.cxx }}
 
     steps:
     - uses: actions/checkout@v3
@@ -25,4 +27,26 @@ jobs:
       run: cmake --build build --parallel
 
     - name: CTest
-      run: ctest --test-dir build
+      run: ctest --test-dir build -V
+
+
+  windows-msvc:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Configure CMake
+      run: cmake -B build -DSTLBFGS_UNIT_TESTS=ON
+
+    - name: Release build
+      run: cmake --build build --parallel --config Release
+
+    - name: Release CTest
+      run: ctest --test-dir build -C Release -V
+
+    - name: Debug build
+      run: cmake --build build --parallel --config Debug
+
+    - name: Debug CTest
+      run: ctest --test-dir build -C Debug -V
