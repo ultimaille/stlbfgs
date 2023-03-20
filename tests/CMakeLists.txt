@@ -1,10 +1,15 @@
-cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
-
 Include(FetchContent)
+
+set(FETCHCONTENT_QUIET false)
+
 FetchContent_Declare(
   Catch2
   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG        v3.3.1)
+  GIT_TAG        v3.3.1
+  GIT_SHALLOW true
+  TLS_VERIFY ON
+  INACTIVITY_TIMEOUT 60
+  )
 
 FetchContent_MakeAvailable(Catch2)
 
@@ -16,4 +21,3 @@ target_link_libraries(stlbfgs-test-all PRIVATE ${CMAKE_DL_LIBS} stlbfgs Catch2::
 
 include(Catch)
 catch_discover_tests(stlbfgs-test-all)
-

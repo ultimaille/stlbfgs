@@ -34,14 +34,11 @@ int main() {
 
 # Build and run unit tests:
 ```sh
-git clone https://github.com/ssloy/stlbfgs.git &&
-cd stlbfgs &&
-mkdir build &&
-cd build &&
-cmake -DSTLBFGS_UNIT_TESTS:BOOL=ON .. &&
-cmake --build . -j &&
-cd tests &&
-ctest
+git clone https://github.com/ssloy/stlbfgs.git
+cd stlbfgs
+cmake -B build -DSTLBFGS_UNIT_TESTS:BOOL=ON
+cmake --build build -j
+ctest --test-dir build -V
 ```
 
 # References
@@ -57,4 +54,3 @@ ctest
 **[5]** Gilbert JC, Lemaréchal C. The module M1QN3. INRIA Rep., version. 2006;3:21.
 
 **[6]** Gilbert JC, Lemaréchal C. Some numerical experiments with variable-storage quasi-Newton algorithms. Mathematical Programming 45, pp. 407-435, 1989.
-
