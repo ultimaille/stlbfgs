@@ -19,6 +19,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install Clang 16 (macOS)
+      if: matrix.cfg.os == 'macos-latest'
+      run: |
+        brew install llvm@16
+
+
     - name: Configure CMake
       run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DSTLBFGS_UNIT_TESTS=ON
 
