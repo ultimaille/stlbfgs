@@ -7,9 +7,8 @@ jobs:
   linux-mac:
     strategy:
       matrix:
-        cfg: [{os: ubuntu-latest, cxx: g++-12},
-              {os: ubuntu-latest, cxx: g++-9},
-              {os: macos-latest, cxx: clang++}]
+        cfg: [{os: ubuntu-latest, cxx: g++},
+              {os: macos-latest, cxx: /opt/homebrew/opt/llvm@16/bin/clang++}] 
         config: [Release, Debug]
 
     runs-on:  ${{ matrix.cfg.os }}
@@ -18,7 +17,7 @@ jobs:
       CXX: ${{ matrix.cfg.cxx }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Configure CMake
       run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DSTLBFGS_UNIT_TESTS=ON
@@ -34,7 +33,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Configure CMake
       run: cmake -B build -DSTLBFGS_UNIT_TESTS=ON
